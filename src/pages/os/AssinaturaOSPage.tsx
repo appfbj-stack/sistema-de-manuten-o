@@ -1,6 +1,123 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useOSStore } from "../../store/osStore";
+
+type SignaturePadProps = {
+  value: string;
+  label: string;
+  onChange: (nextValue: string) => void;
+};
+
+function SignaturePad({ value, label, onChange }: SignaturePadProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawingRef = useRef(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.strokeStyle = "#0f172a";
+    context.lineWidth = 2;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+
+    if (!value.startsWith("data:image")) return;
+
+    const image = new Image();
+    image.onload = () => {
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    };
+    image.src = value;
+  }, [value]);
+
+  const getPosition = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY
+    };
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+    drawingRef.current = true;
+    canvas.setPointerCapture(event.pointerId);
+    const position = getPosition(event);
+    context.beginPath();
+    context.moveTo(position.x, position.y);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current) return;
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+    const position = getPosition(event);
+    context.lineTo(position.x, position.y);
+    context.stroke();
+  };
+
+  const commitDrawing = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    onChange(canvas.toDataURL("image/png"));
+  };
+
+  const handlePointerUp = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current) return;
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+    drawingRef.current = false;
+    canvas.releasePointerCapture(event.pointerId);
+    context.closePath();
+    commitDrawing();
+  };
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    onChange("");
+  };
+
+  return (
+    <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <h2 className="mb-3 text-sm font-semibold text-slate-700">{label}</h2>
+      <canvas
+        ref={canvasRef}
+        width={1000}
+        height={280}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        className="w-full touch-none rounded-xl border border-slate-300 bg-white"
+      />
+      <div className="mt-3 flex justify-end">
+        <button
+          type="button"
+          onClick={clearSignature}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700"
+        >
+          Limpar assinatura
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function AssinaturaOSPage() {
   const navigate = useNavigate();
@@ -53,27 +170,17 @@ export function AssinaturaOSPage() {
         <p className="mt-1 text-sm text-slate-500">{os.titulo}</p>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="mb-4 text-sm font-semibold text-slate-700">Assinatura do cliente</h2>
-        <textarea
-          value={cliente}
-          onChange={(event) => setCliente(event.target.value)}
-          rows={4}
-          className="w-full rounded-xl border border-slate-300 px-4 py-3"
-          placeholder="Digite o nome do cliente ou identificador da assinatura"
-        />
-      </div>
+      <SignaturePad
+        value={cliente}
+        onChange={setCliente}
+        label="Assinatura digital do cliente"
+      />
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="mb-4 text-sm font-semibold text-slate-700">Assinatura do técnico</h2>
-        <textarea
-          value={tecnico}
-          onChange={(event) => setTecnico(event.target.value)}
-          rows={4}
-          className="w-full rounded-xl border border-slate-300 px-4 py-3"
-          placeholder="Digite o nome do técnico ou identificador da assinatura"
-        />
-      </div>
+      <SignaturePad
+        value={tecnico}
+        onChange={setTecnico}
+        label="Assinatura digital do técnico"
+      />
 
       <div className="flex gap-3">
         <button

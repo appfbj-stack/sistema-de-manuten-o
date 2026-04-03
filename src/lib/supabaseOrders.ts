@@ -38,6 +38,48 @@ type EquipmentRow = {
   technical_type: OrdemServico["technicalType"];
 };
 
+const REPORT_PREFIX = "__NEXUS_REPORT_V1__";
+
+function parseNotes(
+  notes: string | null
+): Pick<OrdemServico, "observacoes" | "relatorioDetalhado"> {
+  if (!notes) return { observacoes: "", relatorioDetalhado: undefined };
+  if (!notes.startsWith(REPORT_PREFIX)) {
+    return { observacoes: notes, relatorioDetalhado: undefined };
+  }
+
+  try {
+    const parsed = JSON.parse(notes.slice(REPORT_PREFIX.length)) as {
+      observacoes?: string;
+      relatorioDetalhado?: OrdemServico["relatorioDetalhado"];
+    };
+    return {
+      observacoes: parsed.observacoes ?? "",
+      relatorioDetalhado: parsed.relatorioDetalhado
+    };
+  } catch {
+    return { observacoes: notes, relatorioDetalhado: undefined };
+  }
+}
+
+function buildNotes(
+  observacoes: string | undefined,
+  relatorioDetalhado: OrdemServico["relatorioDetalhado"] | undefined
+) {
+  const hasDetalhado = Boolean(
+    relatorioDetalhado?.servicoExecutado?.trim() ||
+      relatorioDetalhado?.diagnosticoTecnico?.trim() ||
+      relatorioDetalhado?.acoesExecutadas?.trim() ||
+      relatorioDetalhado?.pendenciasRecomendacoes?.trim() ||
+      relatorioDetalhado?.liberacaoFinal?.trim()
+  );
+  if (!hasDetalhado) return observacoes || null;
+  return `${REPORT_PREFIX}${JSON.stringify({
+    observacoes: observacoes ?? "",
+    relatorioDetalhado
+  })}`;
+}
+
 function mapStatusFromDb(status: WorkOrderRow["status"]): OSStatus {
   if (status === "ABERTA") return "aberta";
   if (status === "ANDAMENTO") return "andamento";
@@ -63,6 +105,8 @@ function mapRowToOrder(row: WorkOrderRow): OrdemServico {
     signatures.find((item) => item.signer_type === "tecnico")?.file_url ??
     "";
 
+  const notes = parseNotes(row.notes);
+
   return {
     id: row.id,
     titulo: row.title,
@@ -73,7 +117,8 @@ function mapRowToOrder(row: WorkOrderRow): OrdemServico {
     tipoServico: row.service_type,
     prioridade: row.priority,
     dataAgendada: row.scheduled_for ?? "",
-    observacoes: row.notes ?? "",
+    observacoes: notes.observacoes,
+    relatorioDetalhado: notes.relatorioDetalhado,
     status: mapStatusFromDb(row.status),
     createdAt: row.created_at,
     checklist:
@@ -171,7 +216,7 @@ export async function createOrderSupabase(order: OrdemServico) {
     service_type: order.tipoServico,
     priority: order.prioridade,
     scheduled_for: order.dataAgendada || null,
-    notes: order.observacoes || null,
+    notes: buildNotes(order.observacoes, order.relatorioDetalhado),
     status: mapStatusToDb(order.status)
   };
 
@@ -205,7 +250,20 @@ export async function updateOrderSupabase(id: string, updates: Partial<OrdemServ
   if (updates.tipoServico !== undefined) payload.service_type = updates.tipoServico;
   if (updates.prioridade !== undefined) payload.priority = updates.prioridade;
   if (updates.dataAgendada !== undefined) payload.scheduled_for = updates.dataAgendada || null;
-  if (updates.observacoes !== undefined) payload.notes = updates.observacoes || null;
+  if (updates.observacoes !== undefined || updates.relatorioDetalhado !== undefined) {
+    const current = await supabase
+      .from("work_orders")
+      .select("notes")
+      .eq("id", id)
+      .eq("company_id", supabaseCompanyId)
+      .maybeSingle();
+    if (current.error) throw current.error;
+    const parsed = parseNotes((current.data?.notes as string | null | undefined) ?? null);
+    payload.notes = buildNotes(
+      updates.observacoes ?? parsed.observacoes,
+      updates.relatorioDetalhado ?? parsed.relatorioDetalhado
+    );
+  }
   if (updates.status !== undefined) payload.status = mapStatusToDb(updates.status);
 
   if (Object.keys(payload).length) {

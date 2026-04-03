@@ -17,6 +17,13 @@ export type OrdemServico = {
   prioridade: string;
   dataAgendada: string;
   observacoes?: string;
+  relatorioDetalhado?: {
+    servicoExecutado?: string;
+    diagnosticoTecnico?: string;
+    acoesExecutadas?: string;
+    pendenciasRecomendacoes?: string;
+    liberacaoFinal?: string;
+  };
   status: OSStatus;
   createdAt?: string;
   fotos?: string[];

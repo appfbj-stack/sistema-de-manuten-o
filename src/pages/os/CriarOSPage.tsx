@@ -30,7 +30,12 @@ const schema = z.object({
   tipoServico: z.string().min(1, "Selecione o tipo de serviço"),
   prioridade: z.string().min(1, "Selecione a prioridade"),
   dataAgendada: z.string().min(1, "Informe a data"),
-  observacoes: z.string().optional()
+  observacoes: z.string().optional(),
+  servicoExecutado: z.string().optional(),
+  diagnosticoTecnico: z.string().optional(),
+  acoesExecutadas: z.string().optional(),
+  pendenciasRecomendacoes: z.string().optional(),
+  liberacaoFinal: z.string().optional()
 });
 
 type FormData = z.infer<typeof schema>;
@@ -89,7 +94,12 @@ export function CriarOSPage() {
       tipoServico: "",
       prioridade: "media",
       dataAgendada: "",
-      observacoes: ""
+      observacoes: "",
+      servicoExecutado: "",
+      diagnosticoTecnico: "",
+      acoesExecutadas: "",
+      pendenciasRecomendacoes: "",
+      liberacaoFinal: ""
     }
   });
   const selectedTechnicalType = watch("technicalType");
@@ -136,11 +146,26 @@ export function CriarOSPage() {
       return;
     }
 
-    const { equipamentoPersonalizado, ...rest } = data;
+    const {
+      equipamentoPersonalizado,
+      servicoExecutado,
+      diagnosticoTecnico,
+      acoesExecutadas,
+      pendenciasRecomendacoes,
+      liberacaoFinal,
+      ...rest
+    } = data;
     const os = {
       id: Date.now().toString(),
       ...rest,
       equipamento: equipamentoFinal,
+      relatorioDetalhado: {
+        servicoExecutado,
+        diagnosticoTecnico,
+        acoesExecutadas,
+        pendenciasRecomendacoes,
+        liberacaoFinal
+      },
       createdAt: new Date().toISOString()
     };
 
@@ -341,6 +366,63 @@ export function CriarOSPage() {
                 className="w-full rounded-xl border border-slate-300 px-4 py-3"
                 placeholder="Descreva o problema ou a atividade a ser executada"
               />
+            </div>
+
+            <div className="rounded-xl border border-slate-200 p-3">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Relatório técnico detalhado
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Serviço executado</label>
+                  <textarea
+                    {...register("servicoExecutado")}
+                    rows={3}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    placeholder="Descreva de forma objetiva o serviço realizado"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Diagnóstico técnico</label>
+                  <textarea
+                    {...register("diagnosticoTecnico")}
+                    rows={3}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    placeholder="Falhas identificadas, causa provável e impacto"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Ações executadas</label>
+                  <textarea
+                    {...register("acoesExecutadas")}
+                    rows={3}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    placeholder="Itens corrigidos, substituições e testes executados"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Pendências e recomendações</label>
+                  <textarea
+                    {...register("pendenciasRecomendacoes")}
+                    rows={3}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    placeholder="Pendências abertas e recomendações para próxima visita"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Liberação final</label>
+                  <textarea
+                    {...register("liberacaoFinal")}
+                    rows={2}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    placeholder="Ex: Liberado para operação / Liberado com ressalvas"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

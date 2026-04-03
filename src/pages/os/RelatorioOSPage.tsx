@@ -48,6 +48,9 @@ export function RelatorioOSPage() {
       : itensAtencao.length > 0
         ? "Liberado com recomendações"
         : "Liberado para operação";
+  const relatorioDetalhado = os.relatorioDetalhado;
+  const assinaturaClienteDigital = os.assinaturas?.cliente?.startsWith("data:image");
+  const assinaturaTecnicoDigital = os.assinaturas?.tecnico?.startsWith("data:image");
 
   const gerarPDF = async () => {
     if (!reportRef.current || isGeneratingPdf) return;
@@ -153,7 +156,7 @@ export function RelatorioOSPage() {
           <h2 className="mb-2 text-sm font-semibold text-slate-700">Serviço executado</h2>
 
           <p className="text-sm text-slate-600 leading-6">
-            {os.observacoes || "Sem observações."}
+            {relatorioDetalhado?.servicoExecutado || os.observacoes || "Sem observações."}
           </p>
         </div>
 
@@ -197,7 +200,9 @@ export function RelatorioOSPage() {
                 </div>
               ))
             ) : (
-              <p className="text-slate-600">Nenhuma não conformidade registrada.</p>
+              <p className="text-slate-600">
+                {relatorioDetalhado?.diagnosticoTecnico || "Nenhuma não conformidade registrada."}
+              </p>
             )}
           </div>
         </div>
@@ -215,7 +220,9 @@ export function RelatorioOSPage() {
                 </div>
               ))
             ) : (
-              <p className="text-slate-600">Sem ações concluídas registradas.</p>
+              <p className="text-slate-600">
+                {relatorioDetalhado?.acoesExecutadas || "Sem ações concluídas registradas."}
+              </p>
             )}
           </div>
         </div>
@@ -233,14 +240,19 @@ export function RelatorioOSPage() {
                 </div>
               ))
             ) : (
-              <p className="text-slate-600">Sem pendências abertas após atendimento.</p>
+              <p className="text-slate-600">
+                {relatorioDetalhado?.pendenciasRecomendacoes ||
+                  "Sem pendências abertas após atendimento."}
+              </p>
             )}
           </div>
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm">
           <h2 className="mb-2 text-sm font-semibold text-slate-700">Liberação final</h2>
-          <p className="text-sm font-semibold text-slate-800">{statusLiberacao}</p>
+          <p className="text-sm font-semibold text-slate-800">
+            {relatorioDetalhado?.liberacaoFinal || statusLiberacao}
+          </p>
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm">
@@ -259,12 +271,34 @@ export function RelatorioOSPage() {
           <h2 className="mb-4 text-sm font-semibold text-slate-700">Assinaturas</h2>
 
           <div className="space-y-3 text-sm">
-            <p>
-              <strong>Cliente:</strong> {os.assinaturas?.cliente || "Não coletada"}
-            </p>
-            <p>
-              <strong>Técnico:</strong> {os.assinaturas?.tecnico || "Não coletada"}
-            </p>
+            <div>
+              <p className="mb-2">
+                <strong>Cliente:</strong>
+              </p>
+              {assinaturaClienteDigital ? (
+                <img
+                  src={os.assinaturas?.cliente}
+                  alt="Assinatura do cliente"
+                  className="h-20 rounded-xl border border-slate-200 bg-white p-2"
+                />
+              ) : (
+                <p>{os.assinaturas?.cliente || "Não coletada"}</p>
+              )}
+            </div>
+            <div>
+              <p className="mb-2">
+                <strong>Técnico:</strong>
+              </p>
+              {assinaturaTecnicoDigital ? (
+                <img
+                  src={os.assinaturas?.tecnico}
+                  alt="Assinatura do técnico"
+                  className="h-20 rounded-xl border border-slate-200 bg-white p-2"
+                />
+              ) : (
+                <p>{os.assinaturas?.tecnico || "Não coletada"}</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
