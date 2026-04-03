@@ -1,4 +1,5 @@
 import { openDB } from "./indexedDB";
+import { useSyncStore } from "../../store/syncStore";
 
 export async function addToQueue(action: any) {
   const db = await openDB();
@@ -12,7 +13,11 @@ export async function addToQueue(action: any) {
   });
 
   return new Promise<void>((resolve, reject) => {
-    tx.oncomplete = () => resolve();
+    tx.oncomplete = async () => {
+      const queue = await getQueue();
+      useSyncStore.getState().setQueue(queue);
+      resolve();
+    };
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error);
   });
@@ -40,7 +45,10 @@ export async function clearQueue() {
   store.clear();
 
   return new Promise<void>((resolve, reject) => {
-    tx.oncomplete = () => resolve();
+    tx.oncomplete = () => {
+      useSyncStore.getState().setQueue([]);
+      resolve();
+    };
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error);
   });

@@ -1,73 +1,86 @@
-# React + TypeScript + Vite
+# Nexus OS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PWA para gestão de serviços técnicos com fluxo de OS, checklist, fotos, assinaturas, relatório em PDF e persistência offline via IndexedDB.
 
-Currently, two official plugins are available:
+## Frontend
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Requisitos:
 
-## React Compiler
+- Node.js 20+
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Rodar localmente:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Build:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+Variáveis de ambiente do frontend:
+
+- `VITE_SYNC_INTERVAL_MS`: intervalo da rotina de sync local em ms. Exemplo: `5000`
+- `VITE_API_URL`: URL futura da API. Pode ficar vazia enquanto o teste for só com IndexedDB
+
+Arquivo exemplo:
+
+- [.env.example](C:\Users\ferna\OneDrive\Documentos\SISTEMA DE MANUTENÇÃO\.env.example)
+
+## Backend
+
+O backend está isolado em `backend/`.
+
+Rodar localmente:
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Build:
+
+```bash
+cd backend
+npm run build
+```
+
+Variáveis de ambiente do backend:
+
+- `PORT`: porta da API. Exemplo: `3333`
+- `CORS_ORIGIN`: origem liberada no CORS. Exemplo: `http://localhost:5173`
+
+Arquivo exemplo:
+
+- [backend/.env.example](C:\Users\ferna\OneDrive\Documentos\SISTEMA DE MANUTENÇÃO\backend\.env.example)
+
+## Vercel
+
+Para testar agora na Vercel usando só IndexedDB no frontend, você pode subir apenas a raiz do projeto e configurar:
+
+- `VITE_SYNC_INTERVAL_MS=5000`
+- `VITE_API_URL=` vazio
+
+Se depois você ligar o frontend ao backend, ajuste:
+
+- `VITE_API_URL=https://sua-api.exemplo.com`
+
+## Status Atual
+
+Fluxos já prontos:
+
+- login
+- dashboard
+- clientes
+- equipamentos
+- ordens de serviço
+- checklist dinâmico
+- fotos
+- assinaturas
+- relatório com exportação PDF
+- fila offline visual
+- sincronização local simulada
