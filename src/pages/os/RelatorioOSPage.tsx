@@ -28,6 +28,27 @@ export function RelatorioOSPage() {
     );
   }
 
+  const checklist = os.checklist ?? [];
+  const itensOk = checklist.filter((item) => item.status === "ok");
+  const itensAtencao = checklist.filter((item) => item.status === "atencao");
+  const itensCriticos = checklist.filter((item) => item.status === "critico");
+  const itensPendentes = checklist.filter((item) => item.status === "pendente");
+  const itensDiagnostico = [...itensCriticos, ...itensAtencao, ...itensPendentes];
+  const equipeExecutora = os.tecnico
+    .split(/[\/,;|]/)
+    .map((nome) => nome.trim())
+    .filter(Boolean);
+  const abertura = os.createdAt
+    ? new Date(os.createdAt).toLocaleString("pt-BR", { hour12: false })
+    : "Não informado";
+  const emissao = new Date().toLocaleString("pt-BR", { hour12: false });
+  const statusLiberacao =
+    itensCriticos.length > 0
+      ? "Não liberado para operação"
+      : itensAtencao.length > 0
+        ? "Liberado com recomendações"
+        : "Liberado para operação";
+
   const gerarPDF = async () => {
     if (!reportRef.current || isGeneratingPdf) return;
 
@@ -129,11 +150,97 @@ export function RelatorioOSPage() {
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="mb-2 text-sm font-semibold text-slate-700">Observações técnicas</h2>
+          <h2 className="mb-2 text-sm font-semibold text-slate-700">Serviço executado</h2>
 
           <p className="text-sm text-slate-600 leading-6">
             {os.observacoes || "Sem observações."}
           </p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">Cronologia da atividade</h2>
+          <div className="space-y-2 text-sm">
+            <p>
+              <strong>Abertura da OS:</strong> {abertura}
+            </p>
+            <p>
+              <strong>Data programada:</strong> {os.dataAgendada}
+            </p>
+            <p>
+              <strong>Emissão do relatório:</strong> {emissao}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">Equipe executora</h2>
+          <div className="space-y-2 text-sm text-slate-600">
+            {equipeExecutora.length ? (
+              equipeExecutora.map((nome, index) => <p key={`${nome}-${index}`}>{nome}</p>)
+            ) : (
+              <p>Não informado</p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">Diagnóstico técnico</h2>
+          <div className="space-y-3 text-sm">
+            {itensDiagnostico.length ? (
+              itensDiagnostico.map((item, index) => (
+                <div key={`${item.item}-${index}`} className="rounded-xl bg-slate-50 p-3">
+                  <p className="font-semibold text-slate-800">{item.item}</p>
+                  <p className="text-slate-600">Status: {item.status.toUpperCase()}</p>
+                  <p className="text-slate-600">
+                    Observação: {item.note?.trim() ? item.note : "Sem detalhe informado"}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-slate-600">Nenhuma não conformidade registrada.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">Ações executadas</h2>
+          <div className="space-y-3 text-sm">
+            {itensOk.length ? (
+              itensOk.map((item, index) => (
+                <div key={`${item.item}-${index}`} className="rounded-xl bg-emerald-50 p-3">
+                  <p className="font-semibold text-slate-800">{item.item}</p>
+                  <p className="text-slate-600">
+                    Registro técnico: {item.note?.trim() ? item.note : "Executado sem observação adicional"}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-slate-600">Sem ações concluídas registradas.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">Pendências e recomendações</h2>
+          <div className="space-y-3 text-sm">
+            {[...itensPendentes, ...itensCriticos].length ? (
+              [...itensPendentes, ...itensCriticos].map((item, index) => (
+                <div key={`${item.item}-${index}`} className="rounded-xl bg-amber-50 p-3">
+                  <p className="font-semibold text-slate-800">{item.item}</p>
+                  <p className="text-slate-600">
+                    Recomendação: {item.note?.trim() ? item.note : "Programar intervenção complementar"}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-slate-600">Sem pendências abertas após atendimento.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-semibold text-slate-700">Liberação final</h2>
+          <p className="text-sm font-semibold text-slate-800">{statusLiberacao}</p>
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm">
