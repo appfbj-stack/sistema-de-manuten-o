@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { getChecklistTemplateByTechnicalType, getTechnicalTypeLabel } from "../../lib/technicalModules";
 import { useOSStore } from "../../store/osStore";
 
 type ChecklistStatus = "ok" | "atencao" | "critico" | "pendente";
@@ -8,13 +9,6 @@ type ChecklistEntry = {
   item: string;
   status: ChecklistStatus;
   note?: string;
-};
-
-const templates: Record<string, string[]> = {
-  Inspeção: ["Cabo de aço", "Freio", "Gancho", "Botoeira", "Fim de curso", "Painel elétrico"],
-  Preventiva: ["Lubrificação", "Fixações", "Painel elétrico", "Contatores", "Proteções"],
-  Corretiva: ["Diagnóstico", "Peça danificada", "Substituição", "Teste funcional"],
-  Instalação: ["Base", "Alinhamento", "Ligação elétrica", "Teste de operação"]
 };
 
 export function ChecklistOSPage() {
@@ -28,7 +22,7 @@ export function ChecklistOSPage() {
     if (!os) return [];
     if (os.checklist?.length) return os.checklist;
 
-    const template = templates[os.tipoServico] ?? templates.Inspeção;
+    const template = getChecklistTemplateByTechnicalType(os.technicalType);
     return template.map((item) => ({
       item,
       status: "pendente"
@@ -75,7 +69,9 @@ export function ChecklistOSPage() {
       <div>
         <p className="text-sm text-slate-500">OS #{os.id}</p>
         <h1 className="text-2xl font-bold text-slate-900">Checklist dinâmico</h1>
-        <p className="mt-1 text-sm text-slate-500">{os.titulo}</p>
+        <p className="mt-1 text-sm text-slate-500">
+          {os.titulo} · {getTechnicalTypeLabel(os.technicalType)}
+        </p>
       </div>
 
       {entries.map((entry, index) => (

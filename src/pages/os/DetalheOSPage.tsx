@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { getTechnicalTypeLabel } from "../../lib/technicalModules";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { useOSStore } from "../../store/osStore";
 
@@ -90,6 +91,11 @@ export function DetalheOSPage() {
           <div className="flex justify-between gap-4">
             <span className="text-slate-500">Tipo de serviço</span>
             <strong className="text-right">{os.tipoServico}</strong>
+          </div>
+
+          <div className="flex justify-between gap-4">
+            <span className="text-slate-500">Módulo técnico</span>
+            <strong className="text-right">{getTechnicalTypeLabel(os.technicalType)}</strong>
           </div>
 
           <div className="flex justify-between gap-4">

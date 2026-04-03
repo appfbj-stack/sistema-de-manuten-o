@@ -1,15 +1,32 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addToQueue } from "../../lib/db/queue";
+import { isSupabaseConfigured } from "../../lib/supabaseClient";
+import {
+  fetchEquipmentOptionsSupabase,
+  type EquipmentOption
+} from "../../lib/supabaseOrders";
+import {
+  getChecklistTemplateByTechnicalType,
+  getTechnicalTypeLabel,
+  TECHNICAL_TYPE_OPTIONS,
+  TECHNICAL_TYPE_VALUES
+} from "../../lib/technicalModules";
+import type { TechnicalType } from "../../lib/technicalModules";
 import { useOSStore } from "../../store/osStore";
 
 const schema = z.object({
   titulo: z.string().min(3, "Informe o título da OS"),
   cliente: z.string().min(1, "Selecione o cliente"),
-  equipamento: z.string().min(1, "Selecione o equipamento"),
+  equipamento: z.string().min(1, "Selecione ou crie o equipamento"),
+  equipamentoPersonalizado: z.string().optional(),
   tecnico: z.string().min(1, "Selecione o técnico"),
+  technicalType: z.enum(TECHNICAL_TYPE_VALUES, {
+    message: "Selecione o módulo técnico"
+  }),
   tipoServico: z.string().min(1, "Selecione o tipo de serviço"),
   prioridade: z.string().min(1, "Selecione a prioridade"),
   dataAgendada: z.string().min(1, "Informe a data"),
@@ -19,28 +36,46 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const clientes = [
-  { id: "1", nome: "Metalúrgica Alfa" },
-  { id: "2", nome: "Usinagem Delta" }
+  { nome: "Metalúrgica Alfa" },
+  { nome: "Usinagem Delta" }
 ];
 
-const equipamentos = [
-  { id: "1", nome: "Ponte Rolante 10T" },
-  { id: "2", nome: "Talha Elétrica 3T" },
-  { id: "3", nome: "Quadro Elétrico QDG-01" }
+const equipamentos: { nome: string; technicalType: TechnicalType }[] = [
+  { nome: "Chiller Carrier 30TR", technicalType: "HVAC" },
+  { nome: "UTA Trane Bloco B", technicalType: "HVAC" },
+  { nome: "Self-Contained York 20TR", technicalType: "HVAC" },
+  { nome: "VRF Daikin Torre Norte", technicalType: "HVAC" },
+  { nome: "Splitão Hitachi 15TR", technicalType: "HVAC" },
+  { nome: "Inversor Fronius 50kW", technicalType: "SOLAR" },
+  { nome: "Inversor Huawei SUN2000 100kW", technicalType: "SOLAR" },
+  { nome: "String Box Usina Leste", technicalType: "SOLAR" },
+  { nome: "Tracker Solar Fileira A", technicalType: "SOLAR" },
+  { nome: "Quadro Elétrico QDG-01", technicalType: "ELETRICA" },
+  { nome: "QGBT Bloco A", technicalType: "ELETRICA" },
+  { nome: "Transformador 500kVA", technicalType: "ELETRICA" },
+  { nome: "Banco de Capacitores BC-01", technicalType: "ELETRICA" },
+  { nome: "Ponte Rolante 10T", technicalType: "PONTE_ROLANTE" },
+  { nome: "Ponte Rolante 15T", technicalType: "PONTE_ROLANTE" },
+  { nome: "Talha Elétrica 3T", technicalType: "PONTE_ROLANTE" },
+  { nome: "Monovia 2T Linha Norte", technicalType: "PONTE_ROLANTE" }
 ];
 
 const tecnicos = [
-  { id: "1", nome: "Fernando Borges" },
-  { id: "2", nome: "Técnico João" }
+  { nome: "Fernando Borges" },
+  { nome: "Técnico João" }
 ];
 
 export function CriarOSPage() {
   const navigate = useNavigate();
   const createOrder = useOSStore((state) => state.createOrder);
+  const [equipamentosRemotos, setEquipamentosRemotos] = useState<EquipmentOption[]>([]);
+  const [equipmentSearch, setEquipmentSearch] = useState("");
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -48,18 +83,64 @@ export function CriarOSPage() {
       titulo: "",
       cliente: "",
       equipamento: "",
+      equipamentoPersonalizado: "",
       tecnico: "",
+      technicalType: "PONTE_ROLANTE",
       tipoServico: "",
       prioridade: "media",
       dataAgendada: "",
       observacoes: ""
     }
   });
+  const selectedTechnicalType = watch("technicalType");
+  const selectedEquipamento = watch("equipamento");
+  const checklistSugestivo = getChecklistTemplateByTechnicalType(selectedTechnicalType);
+  const equipamentosFonte = equipamentosRemotos.length ? equipamentosRemotos : equipamentos;
+  const equipamentosDoModulo = useMemo(
+    () => equipamentosFonte.filter((item) => item.technicalType === selectedTechnicalType),
+    [equipamentosFonte, selectedTechnicalType]
+  );
+  const equipamentosFiltrados = useMemo(() => {
+    const term = equipmentSearch.trim().toLowerCase();
+    if (!term) return equipamentosDoModulo;
+    return equipamentosDoModulo.filter((item) => item.nome.toLowerCase().includes(term));
+  }, [equipamentosDoModulo, equipmentSearch]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    void fetchEquipmentOptionsSupabase()
+      .then((items) => {
+        if (items.length) {
+          setEquipamentosRemotos(items);
+        }
+      })
+      .catch(() => {
+      });
+  }, []);
+
+  useEffect(() => {
+    if (selectedEquipamento === "OUTRO" || !selectedEquipamento) return;
+    const existsInModulo = equipamentosDoModulo.some((item) => item.nome === selectedEquipamento);
+    if (!existsInModulo) {
+      setValue("equipamento", "");
+    }
+  }, [equipamentosDoModulo, selectedEquipamento, setValue]);
 
   const onSubmit = async (data: FormData) => {
+    const equipamentoFinal =
+      data.equipamento === "OUTRO"
+        ? (data.equipamentoPersonalizado ?? "").trim()
+        : data.equipamento;
+    if (!equipamentoFinal) {
+      alert("Informe o nome do equipamento personalizado.");
+      return;
+    }
+
+    const { equipamentoPersonalizado, ...rest } = data;
     const os = {
       id: Date.now().toString(),
-      ...data,
+      ...rest,
+      equipamento: equipamentoFinal,
       createdAt: new Date().toISOString()
     };
 
@@ -111,7 +192,7 @@ export function CriarOSPage() {
               >
                 <option value="">Selecione</option>
                 {clientes.map((item) => (
-                  <option key={item.id} value={item.id}>
+                  <option key={item.nome} value={item.nome}>
                     {item.nome}
                   </option>
                 ))}
@@ -123,19 +204,35 @@ export function CriarOSPage() {
 
             <div>
               <label className="mb-1 block text-sm font-medium">Equipamento</label>
+              <input
+                value={equipmentSearch}
+                onChange={(event) => setEquipmentSearch(event.target.value)}
+                className="mb-2 w-full rounded-xl border border-slate-300 px-4 py-3"
+                placeholder="Buscar equipamento por nome"
+              />
               <select
                 {...register("equipamento")}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3"
               >
                 <option value="">Selecione</option>
-                {equipamentos.map((item) => (
-                  <option key={item.id} value={item.id}>
+                {equipamentosFiltrados.map((item) => (
+                  <option key={item.nome} value={item.nome}>
                     {item.nome}
                   </option>
                 ))}
+                <option value="OUTRO">Outro (digitar nome)</option>
               </select>
               {errors.equipamento ? (
                 <p className="mt-1 text-xs text-red-600">{errors.equipamento.message}</p>
+              ) : null}
+              {selectedEquipamento === "OUTRO" ? (
+                <div className="mt-2">
+                  <input
+                    {...register("equipamentoPersonalizado")}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    placeholder="Digite o nome do equipamento"
+                  />
+                </div>
               ) : null}
             </div>
 
@@ -147,7 +244,7 @@ export function CriarOSPage() {
               >
                 <option value="">Selecione</option>
                 {tecnicos.map((item) => (
-                  <option key={item.id} value={item.id}>
+                  <option key={item.nome} value={item.nome}>
                     {item.nome}
                   </option>
                 ))}
@@ -164,6 +261,23 @@ export function CriarOSPage() {
 
           <div className="grid grid-cols-1 gap-4">
             <div>
+              <label className="mb-1 block text-sm font-medium">Módulo técnico</label>
+              <select
+                {...register("technicalType")}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+              >
+                {TECHNICAL_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {errors.technicalType ? (
+                <p className="mt-1 text-xs text-red-600">{errors.technicalType.message}</p>
+              ) : null}
+            </div>
+
+            <div>
               <label className="mb-1 block text-sm font-medium">Tipo de serviço</label>
               <select
                 {...register("tipoServico")}
@@ -178,6 +292,17 @@ export function CriarOSPage() {
               {errors.tipoServico ? (
                 <p className="mt-1 text-xs text-red-600">{errors.tipoServico.message}</p>
               ) : null}
+            </div>
+
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand-800">
+                Checklist sugerido para {getTechnicalTypeLabel(selectedTechnicalType)}
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                {checklistSugestivo.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
             </div>
 
             <div>

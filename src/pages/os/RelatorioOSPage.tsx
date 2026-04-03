@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { useNavigate, useParams } from "react-router-dom";
+import { getTechnicalTypeLabel } from "../../lib/technicalModules";
 import { useOSStore } from "../../store/osStore";
 
 export function RelatorioOSPage() {
@@ -85,6 +86,9 @@ export function RelatorioOSPage() {
             </p>
             <p>
               <strong>Técnico:</strong> {os.tecnico}
+            </p>
+            <p>
+              <strong>Módulo técnico:</strong> {getTechnicalTypeLabel(os.technicalType)}
             </p>
             <p>
               <strong>Data:</strong> {os.dataAgendada}

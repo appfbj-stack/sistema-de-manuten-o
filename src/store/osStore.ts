@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { getAllOSLocal, saveOSLocal } from "../lib/db/storage";
+import { createOrderSupabase, fetchOrdersSupabase, updateOrderSupabase } from "../lib/supabaseOrders";
+import { isSupabaseConfigured, supabaseCompanyId } from "../lib/supabaseClient";
+import type { TechnicalType } from "../lib/technicalModules";
 
 export type OSStatus = "aberta" | "andamento" | "concluida";
 
@@ -9,6 +12,7 @@ export type OrdemServico = {
   cliente: string;
   equipamento: string;
   tecnico: string;
+  technicalType: TechnicalType;
   tipoServico: string;
   prioridade: string;
   dataAgendada: string;
@@ -34,6 +38,7 @@ const seedOrders: OrdemServico[] = [
     cliente: "Metalúrgica Alfa",
     equipamento: "Ponte Rolante 10T",
     tecnico: "Fernando Borges",
+    technicalType: "PONTE_ROLANTE",
     tipoServico: "Inspeção",
     prioridade: "Alta",
     dataAgendada: "2026-04-03",
@@ -48,6 +53,7 @@ const seedOrders: OrdemServico[] = [
     cliente: "Usinagem Delta",
     equipamento: "Quadro Elétrico QDG-01",
     tecnico: "Técnico João",
+    technicalType: "ELETRICA",
     tipoServico: "Corretiva",
     prioridade: "Média",
     dataAgendada: "2026-04-03",
@@ -61,6 +67,7 @@ const seedOrders: OrdemServico[] = [
     cliente: "Galpão Norte",
     equipamento: "Talha Elétrica 3T",
     tecnico: "Fernando Borges",
+    technicalType: "PONTE_ROLANTE",
     tipoServico: "Preventiva",
     prioridade: "Baixa",
     dataAgendada: "2026-04-04",
@@ -89,6 +96,17 @@ export const useOSStore = create<OSState>((set, get) => ({
   loadLocalOrders: async () => {
     if (get().hasLoadedLocal) return;
 
+    if (isSupabaseConfigured && supabaseCompanyId) {
+      try {
+        const remoteOrders = await fetchOrdersSupabase();
+        if (remoteOrders.length) {
+          set({ orders: remoteOrders, hasLoadedLocal: true });
+          return;
+        }
+      } catch {
+      }
+    }
+
     const localOrders = (await getAllOSLocal()) as OrdemServico[];
     if (!localOrders.length) {
       set({ hasLoadedLocal: true });
@@ -113,6 +131,17 @@ export const useOSStore = create<OSState>((set, get) => ({
       status: order.status ?? "aberta"
     };
 
+    if (isSupabaseConfigured && supabaseCompanyId) {
+      try {
+        const createdRemote = await createOrderSupabase(created);
+        set((state) => ({
+          orders: [createdRemote, ...state.orders.filter((item) => item.id !== createdRemote.id)]
+        }));
+        return createdRemote;
+      } catch {
+      }
+    }
+
     set((state) => ({
       orders: [created, ...state.orders.filter((item) => item.id !== created.id)]
     }));
@@ -129,6 +158,13 @@ export const useOSStore = create<OSState>((set, get) => ({
     set((state) => ({
       orders: state.orders.map((item) => (item.id === id ? updated : item))
     }));
+
+    if (isSupabaseConfigured && supabaseCompanyId) {
+      try {
+        await updateOrderSupabase(id, updates);
+      } catch {
+      }
+    }
 
     await saveOSLocal(updated);
   },
