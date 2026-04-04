@@ -4,14 +4,25 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "supabase/**"
+      - "supabase/migrations/**"
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-db-migrate-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - run: test -n "$SUPABASE_DB_URL"
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       - run: npm install -g supabase
       - run: supabase --version
       - run: supabase db push --db-url "$SUPABASE_DB_URL"
