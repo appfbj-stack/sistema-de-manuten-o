@@ -73,11 +73,6 @@ const equipamentos: { nome: string; technicalType: TechnicalType }[] = [
   { nome: "Monovia 2T Linha Norte", technicalType: "PONTE_ROLANTE" }
 ];
 
-const tecnicos = [
-  { nome: "Fernando Borges" },
-  { nome: "Técnico João" }
-];
-
 function formatCnpj(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 14);
   return digits
@@ -138,6 +133,11 @@ export function CriarOSPage() {
     if (!term) return equipamentosDoModulo;
     return equipamentosDoModulo.filter((item) => item.nome.toLowerCase().includes(term));
   }, [equipamentosDoModulo, equipmentSearch]);
+  const tecnicosAtivos = useMemo(() => {
+    const ativos = companyProfile.technicians.filter((item) => item.accessEnabled);
+    if (ativos.length) return ativos.map((item) => ({ nome: item.name }));
+    return [{ nome: "Fernando Borges" }, { nome: "Técnico João" }];
+  }, [companyProfile.technicians]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -364,12 +364,17 @@ export function CriarOSPage() {
 
             <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium">Técnico responsável</label>
+              {companyProfile.technicians.length ? (
+                <p className="mb-1 text-xs text-slate-500">
+                  Exibindo técnicos com acesso liberado em Configurações.
+                </p>
+              ) : null}
               <select
                 {...register("tecnico")}
                 className={fieldClass}
               >
                 <option value="">Selecione</option>
-                {tecnicos.map((item) => (
+                {tecnicosAtivos.map((item) => (
                   <option key={item.nome} value={item.nome}>
                     {item.nome}
                   </option>

@@ -3,22 +3,20 @@ import { create } from "zustand";
 type User = {
   name: string;
   email: string;
+  role: "owner" | "technician";
 };
 
 type AuthState = {
   user: User | null;
-  login: (email: string) => void;
+  login: (user: User) => void;
   logout: () => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  login: (email) =>
+  login: (user) =>
     set({
-      user: {
-        name: "Fernando Borges",
-        email
-      }
+      user
     }),
   logout: () => set({ user: null })
 }));

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
+import { useCompanyProfileStore } from "../../store/companyProfileStore";
 
 const schema = z.object({
   email: z.string().email("Digite um e-mail válido"),
@@ -14,6 +15,7 @@ type FormData = z.infer<typeof schema>;
 export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
+  const companyProfile = useCompanyProfileStore((state) => state.profile);
 
   const {
     register,
@@ -28,15 +30,66 @@ export function LoginPage() {
   });
 
   const onSubmit = async (data: FormData) => {
-    login(data.email);
-    navigate("/");
+    const email = data.email.trim().toLowerCase();
+    const ownerEmail = companyProfile.email.trim().toLowerCase();
+    const technician = companyProfile.technicians.find(
+      (item) => item.email.trim().toLowerCase() === email
+    );
+
+    if (ownerEmail && email === ownerEmail) {
+      login({
+        name: companyProfile.companyName?.trim() || "Dono da empresa",
+        email,
+        role: "owner"
+      });
+      navigate("/");
+      return;
+    }
+
+    if (technician) {
+      if (!technician.accessEnabled) {
+        alert("Acesso deste técnico está bloqueado pelo dono da empresa.");
+        return;
+      }
+      login({
+        name: technician.name,
+        email,
+        role: "technician"
+      });
+      navigate("/");
+      return;
+    }
+
+    if (!ownerEmail && !companyProfile.technicians.length) {
+      login({
+        name: "Administrador",
+        email,
+        role: "owner"
+      });
+      navigate("/");
+      return;
+    }
+
+    alert("E-mail sem acesso liberado. Peça ao dono para cadastrar seu acesso em Configurações.");
   };
+
+  const ownerEmail = companyProfile.email?.trim();
+  const activeTechnicians = companyProfile.technicians.filter((item) => item.accessEnabled).length;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
         <h1 className="text-2xl font-bold text-slate-900">Nexus OS</h1>
         <p className="mt-1 text-sm text-slate-500">Gestão de serviços técnicos</p>
+
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Acessos liberados
+          </p>
+          <p className="mt-1 text-xs text-slate-600">
+            Dono: {ownerEmail || "não configurado"} · Técnicos ativos: {activeTechnicians}
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
           <div>

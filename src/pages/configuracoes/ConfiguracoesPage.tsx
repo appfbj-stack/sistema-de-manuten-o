@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useCompanyProfileStore, type CompanyProfile } from "../../store/companyProfileStore";
+import {
+  useCompanyProfileStore,
+  type CompanyProfile,
+  type TechnicianRole
+} from "../../store/companyProfileStore";
 
 function formatCnpj(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 14);
@@ -26,14 +30,24 @@ function formatPhone(value: string) {
 export function ConfiguracoesPage() {
   const profile = useCompanyProfileStore((state) => state.profile);
   const setProfile = useCompanyProfileStore((state) => state.setProfile);
+  const addTechnician = useCompanyProfileStore((state) => state.addTechnician);
+  const removeTechnician = useCompanyProfileStore((state) => state.removeTechnician);
+  const setTechnicianAccess = useCompanyProfileStore((state) => state.setTechnicianAccess);
   const [form, setForm] = useState<CompanyProfile>(profile);
   const [saved, setSaved] = useState(false);
+  const [teamSaved, setTeamSaved] = useState(false);
+  const [technicianForm, setTechnicianForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    role: "tecnico" as TechnicianRole
+  });
 
   useEffect(() => {
     setForm(profile);
   }, [profile]);
 
-  const updateField = (field: keyof CompanyProfile, value: string) => {
+  const updateField = (field: "companyName" | "cnpj" | "phone" | "email" | "address", value: string) => {
     setSaved(false);
     setForm((current) => ({ ...current, [field]: value }));
   };
@@ -41,6 +55,24 @@ export function ConfiguracoesPage() {
   const handleSave = () => {
     setProfile(form);
     setSaved(true);
+  };
+
+  const handleAddTechnician = () => {
+    const name = technicianForm.name.trim();
+    const email = technicianForm.email.trim().toLowerCase();
+    if (!name || !email) {
+      alert("Informe nome e e-mail do técnico.");
+      return;
+    }
+    addTechnician({
+      name,
+      email,
+      phone: technicianForm.phone.trim(),
+      role: technicianForm.role,
+      accessEnabled: true
+    });
+    setTechnicianForm({ name: "", email: "", phone: "", role: "tecnico" });
+    setTeamSaved(true);
   };
 
   return (
@@ -114,6 +146,120 @@ export function ConfiguracoesPage() {
             Salvar dados da empresa
           </button>
           {saved ? <p className="text-sm text-emerald-600">Dados salvos com sucesso.</p> : null}
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+        <h2 className="mb-1 text-base font-semibold text-slate-800">Acesso de técnicos</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Cadastre os técnicos da empresa e libere o acesso deles ao sistema de forma simples.
+        </p>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-sm font-medium">Nome</label>
+            <input
+              value={technicianForm.name}
+              onChange={(event) =>
+                setTechnicianForm((current) => ({ ...current, name: event.target.value }))
+              }
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
+              placeholder="Ex: Técnico Carlos"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">E-mail de acesso</label>
+            <input
+              value={technicianForm.email}
+              onChange={(event) =>
+                setTechnicianForm((current) => ({ ...current, email: event.target.value }))
+              }
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
+              placeholder="tecnico@empresa.com.br"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Telefone</label>
+            <input
+              value={technicianForm.phone}
+              onChange={(event) =>
+                setTechnicianForm((current) => ({
+                  ...current,
+                  phone: formatPhone(event.target.value)
+                }))
+              }
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Perfil</label>
+            <select
+              value={technicianForm.role}
+              onChange={(event) =>
+                setTechnicianForm((current) => ({
+                  ...current,
+                  role: event.target.value as TechnicianRole
+                }))
+              }
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
+            >
+              <option value="tecnico">Técnico de campo</option>
+              <option value="supervisor">Supervisor</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={handleAddTechnician}
+            className="rounded-xl bg-brand-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
+          >
+            Cadastrar técnico
+          </button>
+          {teamSaved ? <p className="text-sm text-emerald-600">Técnico cadastrado com sucesso.</p> : null}
+        </div>
+
+        <div className="mt-4 space-y-2">
+          {profile.technicians.length ? (
+            profile.technicians.map((technician) => (
+              <div
+                key={technician.id}
+                className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{technician.name}</p>
+                  <p className="text-xs text-slate-500">
+                    {technician.email} · {technician.phone || "Sem telefone"} ·{" "}
+                    {technician.role === "supervisor" ? "Supervisor" : "Técnico"}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTechnicianAccess(technician.id, !technician.accessEnabled)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                      technician.accessEnabled
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {technician.accessEnabled ? "Acesso liberado" : "Acesso bloqueado"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeTechnician(technician.id)}
+                    className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-slate-500">Nenhum técnico cadastrado ainda.</p>
+          )}
         </div>
       </div>
 
