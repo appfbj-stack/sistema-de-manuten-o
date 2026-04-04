@@ -39,11 +39,26 @@ const schema = z.object({
   prioridade: z.string().min(1, "Selecione a prioridade"),
   dataAgendada: z.string().min(1, "Informe a data"),
   observacoes: z.string().optional(),
+  orientacao: z.string().optional(),
   servicoExecutado: z.string().optional(),
+  relatoExecucao: z.string().optional(),
   diagnosticoTecnico: z.string().optional(),
   acoesExecutadas: z.string().optional(),
   pendenciasRecomendacoes: z.string().optional(),
-  liberacaoFinal: z.string().optional()
+  liberacaoFinal: z.string().optional(),
+  checkInAt: z.string().optional(),
+  checkOutAt: z.string().optional(),
+  checkInDistanceM: z.string().optional(),
+  checkOutDistanceM: z.string().optional(),
+  checkInPrecisao: z.string().optional(),
+  checkOutPrecisao: z.string().optional(),
+  inicioDeslocamento: z.string().optional(),
+  duracaoDeslocamento: z.string().optional(),
+  duracaoAtendimento: z.string().optional(),
+  kmInformado: z.string().optional(),
+  finalizadaManualmente: z.boolean().optional(),
+  servicosTabela: z.string().optional(),
+  custosTabela: z.string().optional()
 });
 
 type FormData = z.infer<typeof schema>;
@@ -82,6 +97,50 @@ function formatCnpj(value: string) {
     .replace(/(\d{4})(\d)/, "$1-$2");
 }
 
+function parseNumber(value?: string) {
+  if (!value?.trim()) return undefined;
+  const normalized = value.replace(/\./g, "").replace(",", ".");
+  const parsed = Number(normalized);
+  if (Number.isNaN(parsed)) return undefined;
+  return parsed;
+}
+
+function parseServicosTabela(raw?: string) {
+  return (raw ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [descricao = "", qtdRaw = "", unitRaw = ""] = line.split("|").map((item) => item.trim());
+      const quantidade = Number(qtdRaw.replace(",", "."));
+      const valorUnitario = Number(unitRaw.replace(/\./g, "").replace(",", "."));
+      if (!descricao) return null;
+      return {
+        descricao,
+        quantidade: Number.isNaN(quantidade) ? 1 : quantidade,
+        valorUnitario: Number.isNaN(valorUnitario) ? 0 : valorUnitario
+      };
+    })
+    .filter((item): item is { descricao: string; quantidade: number; valorUnitario: number } => Boolean(item));
+}
+
+function parseCustosTabela(raw?: string) {
+  return (raw ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [descricao = "", valorRaw = ""] = line.split("|").map((item) => item.trim());
+      const valor = Number(valorRaw.replace(/\./g, "").replace(",", "."));
+      if (!descricao) return null;
+      return {
+        descricao,
+        valor: Number.isNaN(valor) ? 0 : valor
+      };
+    })
+    .filter((item): item is { descricao: string; valor: number } => Boolean(item));
+}
+
 export function CriarOSPage() {
   const navigate = useNavigate();
   const createOrder = useOSStore((state) => state.createOrder);
@@ -109,11 +168,26 @@ export function CriarOSPage() {
       prioridade: "media",
       dataAgendada: "",
       observacoes: "",
+      orientacao: "",
       servicoExecutado: "",
+      relatoExecucao: "",
       diagnosticoTecnico: "",
       acoesExecutadas: "",
       pendenciasRecomendacoes: "",
-      liberacaoFinal: ""
+      liberacaoFinal: "",
+      checkInAt: "",
+      checkOutAt: "",
+      checkInDistanceM: "",
+      checkOutDistanceM: "",
+      checkInPrecisao: "",
+      checkOutPrecisao: "",
+      inicioDeslocamento: "",
+      duracaoDeslocamento: "",
+      duracaoAtendimento: "",
+      kmInformado: "",
+      finalizadaManualmente: false,
+      servicosTabela: "",
+      custosTabela: ""
     }
   });
   const selectedTechnicalType = watch("technicalType");
@@ -179,22 +253,56 @@ export function CriarOSPage() {
     const {
       equipamentoPersonalizado,
       servicoExecutado,
+      relatoExecucao,
       diagnosticoTecnico,
       acoesExecutadas,
       pendenciasRecomendacoes,
       liberacaoFinal,
+      orientacao,
+      checkInAt,
+      checkOutAt,
+      checkInDistanceM,
+      checkOutDistanceM,
+      checkInPrecisao,
+      checkOutPrecisao,
+      inicioDeslocamento,
+      duracaoDeslocamento,
+      duracaoAtendimento,
+      kmInformado,
+      finalizadaManualmente,
+      servicosTabela,
+      custosTabela,
       ...rest
     } = data;
+    const servicos = parseServicosTabela(servicosTabela);
+    const custosAdicionais = parseCustosTabela(custosTabela);
     const os = {
       id: Date.now().toString(),
       ...rest,
       equipamento: equipamentoFinal,
       relatorioDetalhado: {
+        orientacao,
         servicoExecutado,
+        relatoExecucao,
         diagnosticoTecnico,
         acoesExecutadas,
         pendenciasRecomendacoes,
-        liberacaoFinal
+        liberacaoFinal,
+        deslocamento: {
+          checkInAt,
+          checkOutAt,
+          checkInDistanceM: parseNumber(checkInDistanceM),
+          checkOutDistanceM: parseNumber(checkOutDistanceM),
+          checkInPrecisao,
+          checkOutPrecisao,
+          inicioDeslocamento,
+          duracaoDeslocamento,
+          duracaoAtendimento,
+          kmInformado: parseNumber(kmInformado),
+          finalizadaManualmente: Boolean(finalizadaManualmente)
+        },
+        servicos,
+        custosAdicionais
       },
       createdAt: new Date().toISOString()
     };
@@ -480,6 +588,111 @@ export function CriarOSPage() {
               </p>
               <div className="space-y-3">
                 <div>
+                  <label className="mb-1 block text-sm font-medium">Orientação da tarefa</label>
+                  <textarea
+                    {...register("orientacao")}
+                    rows={2}
+                    className={fieldClass}
+                    placeholder="Ex: Equipamento X com falha em controle remoto e fim de curso"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Check-in (data/hora)</label>
+                    <input
+                      {...register("checkInAt")}
+                      className={fieldClass}
+                      placeholder="31/03/2026 às 08:20"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Distância no check-in (m)</label>
+                    <input
+                      {...register("checkInDistanceM")}
+                      className={fieldClass}
+                      placeholder="46"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Precisão GPS no check-in</label>
+                    <input
+                      {...register("checkInPrecisao")}
+                      className={fieldClass}
+                      placeholder="Alta precisão"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Check-out (data/hora)</label>
+                    <input
+                      {...register("checkOutAt")}
+                      className={fieldClass}
+                      placeholder="31/03/2026 às 17:25"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Distância no check-out (m)</label>
+                    <input
+                      {...register("checkOutDistanceM")}
+                      className={fieldClass}
+                      placeholder="70014"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Precisão GPS no check-out</label>
+                    <input
+                      {...register("checkOutPrecisao")}
+                      className={fieldClass}
+                      placeholder="Alta precisão"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Início do deslocamento</label>
+                    <input
+                      {...register("inicioDeslocamento")}
+                      className={fieldClass}
+                      placeholder="31/03/2026 às 06:00"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Duração do deslocamento</label>
+                    <input
+                      {...register("duracaoDeslocamento")}
+                      className={fieldClass}
+                      placeholder="02:20:00"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Duração do atendimento</label>
+                    <input
+                      {...register("duracaoAtendimento")}
+                      className={fieldClass}
+                      placeholder="09:05:00"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Km informado</label>
+                    <input
+                      {...register("kmInformado")}
+                      className={fieldClass}
+                      placeholder="170,00"
+                    />
+                  </div>
+                </div>
+
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    {...register("finalizadaManualmente")}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  Finalizada manualmente
+                </label>
+
+                <div>
                   <label className="mb-1 block text-sm font-medium">Serviço executado</label>
                   <textarea
                     {...register("servicoExecutado")}
@@ -520,12 +733,46 @@ export function CriarOSPage() {
                 </div>
 
                 <div>
+                  <label className="mb-1 block text-sm font-medium">Relato de execução</label>
+                  <textarea
+                    {...register("relatoExecucao")}
+                    rows={4}
+                    className={fieldClass}
+                    placeholder="Detalhe cronológico da execução com técnicos, ajustes e testes"
+                  />
+                </div>
+
+                <div>
                   <label className="mb-1 block text-sm font-medium">Liberação final</label>
                   <textarea
                     {...register("liberacaoFinal")}
                     rows={2}
                     className={fieldClass}
                     placeholder="Ex: Liberado para operação / Liberado com ressalvas"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Serviços (uma linha por item: Serviço | Quantidade | Valor unitário)
+                  </label>
+                  <textarea
+                    {...register("servicosTabela")}
+                    rows={4}
+                    className={fieldClass}
+                    placeholder={"MÃO DE OBRA CORRETIVA | 3 | 1320,00\nINSPEÇÃO COMPLEMENTAR | 1 | 450,00"}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Custos adicionais (uma linha por item: Descrição | Valor)
+                  </label>
+                  <textarea
+                    {...register("custosTabela")}
+                    rows={3}
+                    className={fieldClass}
+                    placeholder={"Deslocamento | 340,00\nAlimentação | 360,00"}
                   />
                 </div>
               </div>

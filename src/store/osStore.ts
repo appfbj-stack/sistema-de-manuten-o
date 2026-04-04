@@ -6,6 +6,31 @@ import type { TechnicalType } from "../lib/technicalModules";
 
 export type OSStatus = "aberta" | "andamento" | "concluida";
 
+export type ServicoRelatorio = {
+  descricao: string;
+  quantidade: number;
+  valorUnitario: number;
+};
+
+export type CustoAdicionalRelatorio = {
+  descricao: string;
+  valor: number;
+};
+
+export type DeslocamentoRelatorio = {
+  checkInAt?: string;
+  checkOutAt?: string;
+  checkInDistanceM?: number;
+  checkOutDistanceM?: number;
+  checkInPrecisao?: string;
+  checkOutPrecisao?: string;
+  inicioDeslocamento?: string;
+  duracaoDeslocamento?: string;
+  duracaoAtendimento?: string;
+  kmInformado?: number;
+  finalizadaManualmente?: boolean;
+};
+
 export type OrdemServico = {
   id: string;
   titulo: string;
@@ -19,11 +44,16 @@ export type OrdemServico = {
   dataAgendada: string;
   observacoes?: string;
   relatorioDetalhado?: {
+    orientacao?: string;
     servicoExecutado?: string;
+    relatoExecucao?: string;
     diagnosticoTecnico?: string;
     acoesExecutadas?: string;
     pendenciasRecomendacoes?: string;
     liberacaoFinal?: string;
+    deslocamento?: DeslocamentoRelatorio;
+    servicos?: ServicoRelatorio[];
+    custosAdicionais?: CustoAdicionalRelatorio[];
   };
   status: OSStatus;
   createdAt?: string;

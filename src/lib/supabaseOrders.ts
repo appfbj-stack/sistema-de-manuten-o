@@ -70,11 +70,23 @@ function buildNotes(
   cnpj: string | undefined
 ) {
   const hasDetalhado = Boolean(
+    relatorioDetalhado?.orientacao?.trim() ||
     relatorioDetalhado?.servicoExecutado?.trim() ||
+      relatorioDetalhado?.relatoExecucao?.trim() ||
       relatorioDetalhado?.diagnosticoTecnico?.trim() ||
       relatorioDetalhado?.acoesExecutadas?.trim() ||
       relatorioDetalhado?.pendenciasRecomendacoes?.trim() ||
-      relatorioDetalhado?.liberacaoFinal?.trim()
+      relatorioDetalhado?.liberacaoFinal?.trim() ||
+      relatorioDetalhado?.deslocamento?.checkInAt?.trim() ||
+      relatorioDetalhado?.deslocamento?.checkOutAt?.trim() ||
+      relatorioDetalhado?.deslocamento?.inicioDeslocamento?.trim() ||
+      relatorioDetalhado?.deslocamento?.duracaoDeslocamento?.trim() ||
+      relatorioDetalhado?.deslocamento?.duracaoAtendimento?.trim() ||
+      Number(relatorioDetalhado?.deslocamento?.kmInformado || 0) > 0 ||
+      Number(relatorioDetalhado?.deslocamento?.checkInDistanceM || 0) > 0 ||
+      Number(relatorioDetalhado?.deslocamento?.checkOutDistanceM || 0) > 0 ||
+      (relatorioDetalhado?.servicos?.length || 0) > 0 ||
+      (relatorioDetalhado?.custosAdicionais?.length || 0) > 0
   );
   const hasCnpj = Boolean(cnpj?.trim());
   if (!hasDetalhado && !hasCnpj) return observacoes || null;

@@ -52,8 +52,20 @@ export function RelatorioOSPage() {
         ? "Liberado com recomendações"
         : "Liberado para operação";
   const relatorioDetalhado = os.relatorioDetalhado;
+  const deslocamento = relatorioDetalhado?.deslocamento;
+  const servicos = relatorioDetalhado?.servicos ?? [];
+  const custosAdicionais = relatorioDetalhado?.custosAdicionais ?? [];
+  const totalServicos = servicos.reduce(
+    (acc, item) => acc + item.quantidade * item.valorUnitario,
+    0
+  );
+  const totalCustosAdicionais = custosAdicionais.reduce((acc, item) => acc + item.valor, 0);
+  const totalGeral = totalServicos + totalCustosAdicionais;
   const assinaturaClienteDigital = os.assinaturas?.cliente?.startsWith("data:image");
   const assinaturaTecnicoDigital = os.assinaturas?.tecnico?.startsWith("data:image");
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
   const gerarPDF = async () => {
     if (!reportRef.current || isGeneratingPdf) return;
@@ -205,7 +217,26 @@ export function RelatorioOSPage() {
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Data agendada</p>
               <p className="mt-1 text-sm font-semibold text-slate-800">{os.dataAgendada}</p>
             </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Tipo de tarefa
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">{os.tipoServico}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Finalização</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                {deslocamento?.finalizadaManualmente ? "Finalizada manualmente" : "Finalização padrão"}
+              </p>
+            </div>
           </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-semibold text-slate-700">Orientação da tarefa</h2>
+          <p className="text-sm leading-6 text-slate-600">
+            {relatorioDetalhado?.orientacao || "Sem orientação registrada."}
+          </p>
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm">
@@ -249,6 +280,13 @@ export function RelatorioOSPage() {
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-semibold text-slate-700">Relato de execução</h2>
+          <p className="whitespace-pre-line text-sm leading-6 text-slate-600">
+            {relatorioDetalhado?.relatoExecucao || "Sem relato complementar."}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-slate-700">Cronologia da atividade</h2>
           <div className="space-y-2 text-sm">
             <p>
@@ -259,6 +297,47 @@ export function RelatorioOSPage() {
             </p>
             <p>
               <strong>Emissão do relatório:</strong> {emissao}
+            </p>
+            <p>
+              <strong>Check-in:</strong> {deslocamento?.checkInAt || "Não informado"}
+            </p>
+            <p>
+              <strong>Distância no check-in:</strong>{" "}
+              {deslocamento?.checkInDistanceM !== undefined
+                ? `${deslocamento.checkInDistanceM} metros do local`
+                : "Não informado"}
+            </p>
+            <p>
+              <strong>Precisão no check-in:</strong> {deslocamento?.checkInPrecisao || "Não informado"}
+            </p>
+            <p>
+              <strong>Check-out:</strong> {deslocamento?.checkOutAt || "Não informado"}
+            </p>
+            <p>
+              <strong>Distância no check-out:</strong>{" "}
+              {deslocamento?.checkOutDistanceM !== undefined
+                ? `${deslocamento.checkOutDistanceM} metros do local`
+                : "Não informado"}
+            </p>
+            <p>
+              <strong>Precisão no check-out:</strong>{" "}
+              {deslocamento?.checkOutPrecisao || "Não informado"}
+            </p>
+            <p>
+              <strong>Duração do atendimento:</strong>{" "}
+              {deslocamento?.duracaoAtendimento || "Não informado"}
+            </p>
+            <p>
+              <strong>Início do deslocamento:</strong>{" "}
+              {deslocamento?.inicioDeslocamento || "Não informado"}
+            </p>
+            <p>
+              <strong>Duração do deslocamento:</strong>{" "}
+              {deslocamento?.duracaoDeslocamento || "Não informado"}
+            </p>
+            <p>
+              <strong>Km informado:</strong>{" "}
+              {deslocamento?.kmInformado !== undefined ? `${deslocamento.kmInformado} km` : "Não informado"}
             </p>
           </div>
         </div>
@@ -341,6 +420,76 @@ export function RelatorioOSPage() {
           <p className="text-sm font-semibold text-slate-800">
             {relatorioDetalhado?.liberacaoFinal || statusLiberacao}
           </p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">Serviços</h2>
+          {servicos.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-500">
+                    <th className="py-2 pr-2">Serviço</th>
+                    <th className="py-2 pr-2">Quantidade</th>
+                    <th className="py-2 pr-2">Valor unitário</th>
+                    <th className="py-2">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {servicos.map((item, index) => {
+                    const subtotal = item.quantidade * item.valorUnitario;
+                    return (
+                      <tr key={`${item.descricao}-${index}`} className="border-b border-slate-100">
+                        <td className="py-2 pr-2">{item.descricao}</td>
+                        <td className="py-2 pr-2">{item.quantidade}</td>
+                        <td className="py-2 pr-2">{formatCurrency(item.valorUnitario)}</td>
+                        <td className="py-2 font-semibold text-slate-800">{formatCurrency(subtotal)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-600">Nenhum serviço financeiro lançado.</p>
+          )}
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">Custos adicionais</h2>
+          {custosAdicionais.length ? (
+            <div className="space-y-2">
+              {custosAdicionais.map((item, index) => (
+                <div
+                  key={`${item.descricao}-${index}`}
+                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                >
+                  <span className="text-sm text-slate-700">{item.descricao}</span>
+                  <span className="text-sm font-semibold text-slate-800">{formatCurrency(item.valor)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-600">Sem custos adicionais.</p>
+          )}
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">Resumo de valores</h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+              <span>Serviços</span>
+              <strong>{formatCurrency(totalServicos)}</strong>
+            </div>
+            <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+              <span>Custos adicionais</span>
+              <strong>{formatCurrency(totalCustosAdicionais)}</strong>
+            </div>
+            <div className="flex items-center justify-between rounded-xl bg-brand-50 px-3 py-2 text-brand-900">
+              <span>Total</span>
+              <strong>{formatCurrency(totalGeral)}</strong>
+            </div>
+          </div>
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm">
