@@ -10,6 +10,7 @@ export type OrdemServico = {
   id: string;
   titulo: string;
   cliente: string;
+  cnpj?: string;
   equipamento: string;
   tecnico: string;
   technicalType: TechnicalType;

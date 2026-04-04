@@ -16,12 +16,12 @@ function ActionCard({
   buttonLabel: string;
 }) {
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">{title}</h3>
       <p className="mt-1 text-sm text-slate-500">{description}</p>
       <button
         onClick={onClick}
-        className="mt-4 rounded-xl bg-brand-700 px-4 py-2 text-sm font-medium text-white"
+        className="mt-4 rounded-xl bg-brand-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
       >
         {buttonLabel}
       </button>
@@ -61,17 +61,20 @@ export function DetalheOSPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-slate-500">OS #{id}</p>
-          <h1 className="text-2xl font-bold text-slate-900">{os.titulo}</h1>
+      <div className="rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 p-5 text-white shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-brand-100">OS #{id}</p>
+            <h1 className="mt-1 text-2xl font-bold">{os.titulo}</h1>
+          </div>
+          <StatusBadge status={os.status} />
         </div>
-        <StatusBadge status={os.status} />
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="mb-4 text-sm font-semibold text-slate-700">Dados da OS</h2>
-
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+        <div>
+          <h2 className="mb-4 text-sm font-semibold text-slate-700">Dados da OS</h2>
+        </div>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between gap-4">
             <span className="text-slate-500">Cliente</span>
@@ -110,12 +113,12 @@ export function DetalheOSPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
         <h2 className="mb-2 text-sm font-semibold text-slate-700">Observações</h2>
         <p className="text-sm leading-6 text-slate-600">{os.observacoes || "Sem observações."}</p>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
         <h2 className="mb-4 text-sm font-semibold text-slate-700">Resumo da execução</h2>
 
         <div className="grid grid-cols-3 gap-3">
@@ -167,14 +170,14 @@ export function DetalheOSPage() {
       <div className="flex gap-3">
         <button
           onClick={() => navigate("/os")}
-          className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700"
+          className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
         >
           Voltar
         </button>
 
         <button
           onClick={() => void handleFinish()}
-          className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-medium text-white"
+          className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700"
         >
           Finalizar OS
         </button>

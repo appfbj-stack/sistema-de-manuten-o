@@ -14,6 +14,9 @@ body,
 
 body {
   @apply bg-slate-100 text-slate-900 antialiased;
+  background-image:
+    radial-gradient(circle at 10% 5%, rgba(30, 41, 59, 0.06), transparent 38%),
+    radial-gradient(circle at 90% 0%, rgba(37, 99, 235, 0.08), transparent 34%);
 }
 
 button,
@@ -21,4 +24,16 @@ input,
 select,
 textarea {
   @apply outline-none;
+}
+
+input,
+select,
+textarea {
+  @apply transition;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  @apply border-brand-500 ring-2 ring-brand-50;
 }

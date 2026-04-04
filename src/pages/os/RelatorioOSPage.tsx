@@ -3,6 +3,7 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { useNavigate, useParams } from "react-router-dom";
 import { getTechnicalTypeLabel } from "../../lib/technicalModules";
+import { useCompanyProfileStore } from "../../store/companyProfileStore";
 import { useOSStore } from "../../store/osStore";
 
 export function RelatorioOSPage() {
@@ -11,6 +12,7 @@ export function RelatorioOSPage() {
   const { id } = useParams();
   const loadLocalOrders = useOSStore((state) => state.loadLocalOrders);
   const os = useOSStore((state) => state.getOrderById(id));
+  const companyProfile = useCompanyProfileStore((state) => state.profile);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   useEffect(() => {
@@ -99,24 +101,83 @@ export function RelatorioOSPage() {
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-slate-700">Empresa executora</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Nome da empresa
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                {companyProfile.companyName?.trim() || "Não informado"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">CNPJ</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                {companyProfile.cnpj?.trim() || os.cnpj?.trim() || "Não informado"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Telefone</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                {companyProfile.phone?.trim() || "Não informado"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">E-mail</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                {companyProfile.email?.trim() || "Não informado"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Endereço</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                {companyProfile.address?.trim() || "Não informado"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-slate-700">Informações do serviço</h2>
 
-          <div className="space-y-2 text-sm">
-            <p>
-              <strong>Cliente:</strong> {os.cliente}
-            </p>
-            <p>
-              <strong>Equipamento:</strong> {os.equipamento}
-            </p>
-            <p>
-              <strong>Técnico:</strong> {os.tecnico}
-            </p>
-            <p>
-              <strong>Módulo técnico:</strong> {getTechnicalTypeLabel(os.technicalType)}
-            </p>
-            <p>
-              <strong>Data:</strong> {os.dataAgendada}
-            </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Título</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">{os.titulo}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cliente</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">{os.cliente}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">CNPJ</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                {os.cnpj?.trim() ? os.cnpj : "Não informado"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Equipamento</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">{os.equipamento}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Técnico responsável
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">{os.tecnico}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Módulo técnico
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                {getTechnicalTypeLabel(os.technicalType)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Data agendada</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">{os.dataAgendada}</p>
+            </div>
           </div>
         </div>
 

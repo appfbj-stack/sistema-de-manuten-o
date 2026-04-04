@@ -16,11 +16,19 @@ import {
   TECHNICAL_TYPE_VALUES
 } from "../../lib/technicalModules";
 import type { TechnicalType } from "../../lib/technicalModules";
+import { useCompanyProfileStore } from "../../store/companyProfileStore";
 import { useOSStore } from "../../store/osStore";
 
 const schema = z.object({
   titulo: z.string().min(3, "Informe o título da OS"),
   cliente: z.string().min(1, "Selecione o cliente"),
+  cnpj: z
+    .string()
+    .optional()
+    .refine((value) => {
+      if (!value?.trim()) return true;
+      return value.replace(/\D/g, "").length === 14;
+    }, "Informe um CNPJ válido"),
   equipamento: z.string().min(1, "Selecione ou crie o equipamento"),
   equipamentoPersonalizado: z.string().optional(),
   tecnico: z.string().min(1, "Selecione o técnico"),
@@ -70,9 +78,19 @@ const tecnicos = [
   { nome: "Técnico João" }
 ];
 
+function formatCnpj(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 14);
+  return digits
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+}
+
 export function CriarOSPage() {
   const navigate = useNavigate();
   const createOrder = useOSStore((state) => state.createOrder);
+  const companyProfile = useCompanyProfileStore((state) => state.profile);
   const [equipamentosRemotos, setEquipamentosRemotos] = useState<EquipmentOption[]>([]);
   const [equipmentSearch, setEquipmentSearch] = useState("");
 
@@ -87,6 +105,7 @@ export function CriarOSPage() {
     defaultValues: {
       titulo: "",
       cliente: "",
+      cnpj: "",
       equipamento: "",
       equipamentoPersonalizado: "",
       tecnico: "",
@@ -135,6 +154,13 @@ export function CriarOSPage() {
       setValue("equipamento", "");
     }
   }, [equipamentosDoModulo, selectedEquipamento, setValue]);
+
+  useEffect(() => {
+    const hasValidCnpj = companyProfile.cnpj?.trim().replace(/\D/g, "").length === 14;
+    if (hasValidCnpj) {
+      setValue("cnpj", companyProfile.cnpj);
+    }
+  }, [companyProfile.cnpj, setValue]);
 
   const onSubmit = async (data: FormData) => {
     const equipamentoFinal =
@@ -185,23 +211,30 @@ export function CriarOSPage() {
     navigate("/os");
   };
 
+  const fieldClass =
+    "w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100";
+
   return (
     <div className="space-y-4">
-      <div>
-        <p className="text-sm text-slate-500">Ordens de Serviço</p>
-        <h1 className="text-2xl font-bold text-slate-900">Criar nova OS</h1>
+      <div className="rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 p-5 text-white shadow-sm">
+        <p className="text-xs uppercase tracking-wide text-brand-100">Ordens de Serviço</p>
+        <h1 className="mt-1 text-2xl font-bold">Criar nova OS</h1>
+        <p className="mt-2 text-sm text-brand-100">
+          Preencha os dados técnicos. Informações da empresa são aplicadas automaticamente no
+          relatório final.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
           <h2 className="mb-4 text-sm font-semibold text-slate-700">Dados principais</h2>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">Título da OS</label>
               <input
                 {...register("titulo")}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className={fieldClass}
                 placeholder="Ex: Inspeção de ponte rolante"
               />
               {errors.titulo ? (
@@ -213,7 +246,7 @@ export function CriarOSPage() {
               <label className="mb-1 block text-sm font-medium">Cliente</label>
               <select
                 {...register("cliente")}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className={fieldClass}
               >
                 <option value="">Selecione</option>
                 {clientes.map((item) => (
@@ -228,16 +261,38 @@ export function CriarOSPage() {
             </div>
 
             <div>
+              <label className="mb-1 block text-sm font-medium">CNPJ</label>
+              <input
+                {...register("cnpj", {
+                  onChange: (event) => {
+                    event.target.value = formatCnpj(event.target.value);
+                  }
+                })}
+                readOnly={Boolean(companyProfile.cnpj?.trim())}
+                className={`${fieldClass} read-only:bg-slate-100 read-only:text-slate-500`}
+                placeholder="00.000.000/0000-00"
+              />
+              {companyProfile.cnpj?.trim() ? (
+                <p className="mt-1 text-xs text-slate-500">
+                  CNPJ da empresa definido em Configurações.
+                </p>
+              ) : null}
+              {errors.cnpj ? (
+                <p className="mt-1 text-xs text-red-600">{errors.cnpj.message}</p>
+              ) : null}
+            </div>
+
+            <div>
               <label className="mb-1 block text-sm font-medium">Equipamento</label>
               <input
                 value={equipmentSearch}
                 onChange={(event) => setEquipmentSearch(event.target.value)}
-                className="mb-2 w-full rounded-xl border border-slate-300 px-4 py-3"
+                className={`${fieldClass} mb-2`}
                 placeholder="Buscar equipamento por nome"
               />
               <select
                 {...register("equipamento")}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className={fieldClass}
               >
                 <option value="">Selecione</option>
                 {equipamentosFiltrados.map((item) => (
@@ -254,18 +309,18 @@ export function CriarOSPage() {
                 <div className="mt-2">
                   <input
                     {...register("equipamentoPersonalizado")}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    className={fieldClass}
                     placeholder="Digite o nome do equipamento"
                   />
                 </div>
               ) : null}
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium">Técnico responsável</label>
               <select
                 {...register("tecnico")}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className={fieldClass}
               >
                 <option value="">Selecione</option>
                 {tecnicos.map((item) => (
@@ -281,7 +336,7 @@ export function CriarOSPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
           <h2 className="mb-4 text-sm font-semibold text-slate-700">Execução</h2>
 
           <div className="grid grid-cols-1 gap-4">
@@ -289,7 +344,7 @@ export function CriarOSPage() {
               <label className="mb-1 block text-sm font-medium">Módulo técnico</label>
               <select
                 {...register("technicalType")}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className={fieldClass}
               >
                 {TECHNICAL_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -306,7 +361,7 @@ export function CriarOSPage() {
               <label className="mb-1 block text-sm font-medium">Tipo de serviço</label>
               <select
                 {...register("tipoServico")}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className={fieldClass}
               >
                 <option value="">Selecione</option>
                 <option value="inspecao">Inspeção</option>
@@ -334,7 +389,7 @@ export function CriarOSPage() {
               <label className="mb-1 block text-sm font-medium">Prioridade</label>
               <select
                 {...register("prioridade")}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className={fieldClass}
               >
                 <option value="baixa">Baixa</option>
                 <option value="media">Média</option>
@@ -351,7 +406,7 @@ export function CriarOSPage() {
               <input
                 type="date"
                 {...register("dataAgendada")}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className={fieldClass}
               />
               {errors.dataAgendada ? (
                 <p className="mt-1 text-xs text-red-600">{errors.dataAgendada.message}</p>
@@ -363,7 +418,7 @@ export function CriarOSPage() {
               <textarea
                 {...register("observacoes")}
                 rows={4}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className={fieldClass}
                 placeholder="Descreva o problema ou a atividade a ser executada"
               />
             </div>
@@ -378,7 +433,7 @@ export function CriarOSPage() {
                   <textarea
                     {...register("servicoExecutado")}
                     rows={3}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    className={fieldClass}
                     placeholder="Descreva de forma objetiva o serviço realizado"
                   />
                 </div>
@@ -388,7 +443,7 @@ export function CriarOSPage() {
                   <textarea
                     {...register("diagnosticoTecnico")}
                     rows={3}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    className={fieldClass}
                     placeholder="Falhas identificadas, causa provável e impacto"
                   />
                 </div>
@@ -398,7 +453,7 @@ export function CriarOSPage() {
                   <textarea
                     {...register("acoesExecutadas")}
                     rows={3}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    className={fieldClass}
                     placeholder="Itens corrigidos, substituições e testes executados"
                   />
                 </div>
@@ -408,7 +463,7 @@ export function CriarOSPage() {
                   <textarea
                     {...register("pendenciasRecomendacoes")}
                     rows={3}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    className={fieldClass}
                     placeholder="Pendências abertas e recomendações para próxima visita"
                   />
                 </div>
@@ -418,7 +473,7 @@ export function CriarOSPage() {
                   <textarea
                     {...register("liberacaoFinal")}
                     rows={2}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                    className={fieldClass}
                     placeholder="Ex: Liberado para operação / Liberado com ressalvas"
                   />
                 </div>

@@ -82,13 +82,13 @@ export function FotosOSPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <p className="text-sm text-slate-500">OS #{os.id}</p>
-        <h1 className="text-2xl font-bold text-slate-900">Fotos da OS</h1>
-        <p className="mt-1 text-sm text-slate-500">{os.titulo}</p>
+      <div className="rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 p-5 text-white shadow-sm">
+        <p className="text-xs uppercase tracking-wide text-brand-100">OS #{os.id}</p>
+        <h1 className="mt-1 text-2xl font-bold">Fotos da OS</h1>
+        <p className="mt-2 text-sm text-brand-100">{os.titulo}</p>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
         <h2 className="mb-4 text-sm font-semibold text-slate-700">Adicionar fotos</h2>
 
         <div className="space-y-4">
@@ -97,7 +97,7 @@ export function FotosOSPage() {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3"
             >
               {photoTypes.map((type) => (
                 <option key={type} value={type}>
@@ -107,7 +107,7 @@ export function FotosOSPage() {
             </select>
           </div>
 
-          <label className="flex cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 px-4 py-8 text-center hover:border-brand-500">
+          <label className="flex cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 px-4 py-8 text-center transition hover:border-brand-500 hover:bg-brand-50">
             <div>
               <p className="font-medium text-slate-700">Selecionar ou tirar fotos</p>
               <p className="mt-1 text-sm text-slate-500">
@@ -127,7 +127,7 @@ export function FotosOSPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-700">Fotos anexadas</h2>
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
@@ -155,7 +155,7 @@ export function FotosOSPage() {
                 <button
                   type="button"
                   onClick={() => handleRemovePhoto(photo.id)}
-                  className="mt-3 w-full rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600"
+                  className="mt-3 w-full rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                 >
                   Remover
                 </button>
@@ -169,7 +169,7 @@ export function FotosOSPage() {
         <button
           type="button"
           onClick={() => navigate(`/os/${os.id}`)}
-          className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700"
+          className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
         >
           Voltar
         </button>
@@ -177,7 +177,7 @@ export function FotosOSPage() {
         <button
           type="button"
           onClick={handleSave}
-          className="flex-1 rounded-xl bg-brand-700 px-4 py-3 font-medium text-white"
+          className="flex-1 rounded-xl bg-brand-700 px-4 py-3 font-semibold text-white transition hover:bg-brand-800"
         >
           Salvar fotos
         </button>

@@ -66,16 +66,16 @@ export function ChecklistOSPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <p className="text-sm text-slate-500">OS #{os.id}</p>
-        <h1 className="text-2xl font-bold text-slate-900">Checklist dinâmico</h1>
-        <p className="mt-1 text-sm text-slate-500">
+      <div className="rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 p-5 text-white shadow-sm">
+        <p className="text-xs uppercase tracking-wide text-brand-100">OS #{os.id}</p>
+        <h1 className="mt-1 text-2xl font-bold">Checklist dinâmico</h1>
+        <p className="mt-2 text-sm text-brand-100">
           {os.titulo} · {getTechnicalTypeLabel(os.technicalType)}
         </p>
       </div>
 
       {entries.map((entry, index) => (
-        <div key={`${entry.item}-${index}`} className="rounded-2xl bg-white p-4 shadow-sm">
+        <div key={`${entry.item}-${index}`} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
           <h2 className="text-sm font-semibold text-slate-800">{entry.item}</h2>
 
           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -87,7 +87,7 @@ export function ChecklistOSPage() {
                 className={`rounded-xl px-3 py-2 text-sm font-medium capitalize ${
                   entry.status === status
                     ? "bg-brand-700 text-white"
-                    : "bg-slate-100 text-slate-700"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
                 {status}
@@ -99,7 +99,7 @@ export function ChecklistOSPage() {
             value={entry.note ?? ""}
             onChange={(event) => updateEntry(index, { note: event.target.value })}
             rows={3}
-            className="mt-3 w-full rounded-xl border border-slate-300 px-4 py-3"
+            className="mt-3 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3"
             placeholder="Observações do item"
           />
         </div>
@@ -109,7 +109,7 @@ export function ChecklistOSPage() {
         <button
           type="button"
           onClick={() => navigate(`/os/${os.id}`)}
-          className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700"
+          className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
         >
           Voltar
         </button>
@@ -117,7 +117,7 @@ export function ChecklistOSPage() {
         <button
           type="button"
           onClick={handleSave}
-          className="flex-1 rounded-xl bg-brand-700 px-4 py-3 font-medium text-white"
+          className="flex-1 rounded-xl bg-brand-700 px-4 py-3 font-semibold text-white transition hover:bg-brand-800"
         >
           Salvar checklist
         </button>

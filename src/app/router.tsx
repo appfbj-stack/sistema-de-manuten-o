@@ -1,4 +1,4 @@
-import { createBrowserRouter, Link, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppShell } from "../components/layout/AppShell";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { DashboardPage } from "../pages/dashboard/DashboardPage";
@@ -12,21 +12,7 @@ import { DetalheOSPage } from "../pages/os/DetalheOSPage";
 import { FotosOSPage } from "../pages/os/FotosOSPage";
 import { RelatorioOSPage } from "../pages/os/RelatorioOSPage";
 import { EquipePage } from "../pages/equipe/EquipePage";
-
-function ConfiguracoesPage() {
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Mais</h1>
-      <Link
-        to="/equipe"
-        className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm"
-      >
-        <span>Equipe</span>
-        <span className="text-slate-400">Abrir</span>
-      </Link>
-    </div>
-  );
-}
+import { ConfiguracoesPage } from "../pages/configuracoes/ConfiguracoesPage";
 
 export const router = createBrowserRouter([
   {
