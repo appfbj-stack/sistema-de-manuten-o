@@ -56,3 +56,43 @@ export type OrdemServico = {
 export type SyncQueueAction =
   | { type: "CREATE_OS"; payload: OrdemServico }
   | { type: "UPDATE_OS"; payload: { id: string; updates: Partial<OrdemServico> } };
+
+export type BillingAccessStatus = "active" | "inactive";
+
+export type CompanyBillingCustomer = {
+  companyId: string;
+  asaasCustomerId: string;
+  name: string;
+  email?: string;
+  cpfCnpj?: string;
+  phone?: string;
+  createdAt: string;
+};
+
+export type BillingChargeStatus =
+  | "PENDING"
+  | "RECEIVED"
+  | "CONFIRMED"
+  | "OVERDUE"
+  | "REFUNDED"
+  | "RECEIVED_IN_CASH"
+  | "AWAITING_RISK_ANALYSIS"
+  | "CANCELLED";
+
+export type CompanyBillingCharge = {
+  id: string;
+  companyId: string;
+  asaasCustomerId: string;
+  asaasPaymentId: string;
+  value: number;
+  dueDate: string;
+  billingType: "PIX" | "BOLETO" | "CREDIT_CARD" | "UNDEFINED";
+  status: BillingChargeStatus;
+  externalReference: string;
+  invoiceUrl?: string;
+  bankSlipUrl?: string;
+  pixQrCode?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+};

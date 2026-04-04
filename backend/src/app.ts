@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import { authRouter } from "./routes/auth.js";
+import { billingRouter } from "./routes/billing.js";
 import { clientesRouter } from "./routes/clientes.js";
 import { equipamentosRouter } from "./routes/equipamentos.js";
 import { osRouter } from "./routes/os.js";
@@ -25,6 +26,7 @@ export function createApp() {
   });
 
   app.use("/auth", authRouter);
+  app.use("/billing", billingRouter);
   app.use("/clientes", clientesRouter);
   app.use("/equipamentos", equipamentosRouter);
   app.use("/os", osRouter);

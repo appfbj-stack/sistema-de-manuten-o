@@ -73,3 +73,39 @@ export const syncSchema = z.object({
     ])
   )
 });
+
+export const createBillingCustomerSchema = z.object({
+  companyId: z.string().min(1),
+  name: z.string().min(2),
+  email: z.string().email().optional(),
+  cpfCnpj: z.string().min(11).max(18).optional(),
+  phone: z.string().min(8).max(20).optional()
+});
+
+export const createBillingChargeSchema = z.object({
+  companyId: z.string().min(1),
+  customerId: z.string().optional(),
+  value: z.number().positive(),
+  dueDate: z.string().min(8),
+  description: z.string().min(3).optional(),
+  billingType: z.enum(["PIX", "BOLETO", "CREDIT_CARD", "UNDEFINED"]).default("PIX"),
+  externalReference: z.string().min(3).optional()
+});
+
+export const asaasWebhookSchema = z.object({
+  id: z.string().optional(),
+  event: z.string(),
+  payment: z
+    .object({
+      id: z.string(),
+      customer: z.string().optional(),
+      value: z.number().optional(),
+      status: z.string(),
+      dueDate: z.string().optional(),
+      billingType: z.string().optional(),
+      externalReference: z.string().optional(),
+      invoiceUrl: z.string().optional(),
+      bankSlipUrl: z.string().optional()
+    })
+    .optional()
+});

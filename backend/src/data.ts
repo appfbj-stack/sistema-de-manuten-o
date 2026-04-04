@@ -1,4 +1,11 @@
-import type { Cliente, Equipamento, OrdemServico, Tecnico } from "./types.js";
+import type {
+  Cliente,
+  CompanyBillingCharge,
+  CompanyBillingCustomer,
+  Equipamento,
+  OrdemServico,
+  Tecnico
+} from "./types.js";
 
 export const clientes: Cliente[] = [
   {
@@ -91,3 +98,9 @@ export const ordensServico: OrdemServico[] = [
     assinaturas: {}
   }
 ];
+
+export const billingCustomers: CompanyBillingCustomer[] = [];
+
+export const billingCharges: CompanyBillingCharge[] = [];
+
+export const processedBillingWebhookEvents = new Set<string>();
