@@ -1,13 +1,47 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { useCompanyProfileStore } from "../../store/companyProfileStore";
+import { useAuthStore } from "../../store/authStore";
 import { useSyncStore } from "../../store/syncStore";
 import { BottomNav } from "./BottomNav";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
   const isOnline = useOnlineStatus();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const companyProfile = useCompanyProfileStore((state) => state.profile);
   const isSyncing = useSyncStore((state) => state.isSyncing);
   const queue = useSyncStore((state) => state.queue);
   const pendingCount = queue.length;
+  const apiUrl = import.meta.env.VITE_API_URL?.trim();
+
+  useEffect(() => {
+    if (!user || !apiUrl) return;
+
+    const companyId =
+      import.meta.env.VITE_SUPABASE_COMPANY_ID?.trim() || companyProfile.cnpj.trim() || "empresa-001";
+
+    const validate = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/billing/access/${encodeURIComponent(companyId)}`);
+        if (!response.ok) return;
+        const data = (await response.json()) as { accessStatus?: "active" | "inactive" };
+        if (data.accessStatus === "inactive") {
+          logout();
+          alert("Período de teste finalizado. Assinatura pendente para continuar usando.");
+          navigate("/login", { replace: true });
+        }
+      } catch {
+        return;
+      }
+    };
+
+    validate();
+    const intervalId = window.setInterval(validate, 60000);
+    return () => window.clearInterval(intervalId);
+  }, [apiUrl, companyProfile.cnpj, logout, navigate, user]);
 
   return (
     <div className="mx-auto min-h-screen max-w-md">

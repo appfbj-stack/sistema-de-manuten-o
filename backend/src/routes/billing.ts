@@ -40,6 +40,19 @@ function resolveAccessStatus(companyId: string): BillingAccessStatus {
   return ACTIVE_STATUSES.includes(companyRelatedCharges[0].status) ? "active" : "inactive";
 }
 
+billingRouter.get("/access/:companyId", (req, res) => {
+  const companyId = req.params.companyId.trim();
+  const latestCharge = billingCharges
+    .filter((item) => item.companyId === companyId)
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
+
+  return res.json({
+    companyId,
+    accessStatus: resolveAccessStatus(companyId),
+    latestCharge: latestCharge || null
+  });
+});
+
 billingRouter.post("/customers", async (req, res) => {
   const parsed = createBillingCustomerSchema.safeParse(req.body);
 

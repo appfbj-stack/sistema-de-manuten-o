@@ -12,6 +12,26 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+type BillingAccessResponse = {
+  accessStatus: "active" | "inactive";
+};
+
+const apiUrl = import.meta.env.VITE_API_URL?.trim();
+
+async function loadBillingAccess(companyId: string) {
+  if (!apiUrl) {
+    return { accessStatus: "active" as const };
+  }
+
+  const response = await fetch(`${apiUrl}/billing/access/${encodeURIComponent(companyId)}`);
+  if (!response.ok) {
+    throw new Error("Falha ao consultar status de pagamento");
+  }
+
+  const data = (await response.json()) as BillingAccessResponse;
+  return data;
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
@@ -32,9 +52,22 @@ export function LoginPage() {
   const onSubmit = async (data: FormData) => {
     const email = data.email.trim().toLowerCase();
     const ownerEmail = companyProfile.email.trim().toLowerCase();
+    const companyId =
+      import.meta.env.VITE_SUPABASE_COMPANY_ID?.trim() || companyProfile.cnpj.trim() || "empresa-001";
     const technician = companyProfile.technicians.find(
       (item) => item.email.trim().toLowerCase() === email
     );
+
+    try {
+      const billing = await loadBillingAccess(companyId);
+      if (billing.accessStatus === "inactive") {
+        alert("Período de teste finalizado. Assinatura pendente para liberar o acesso.");
+        return;
+      }
+    } catch {
+      alert("Não foi possível validar pagamento agora. Tente novamente em alguns instantes.");
+      return;
+    }
 
     if (ownerEmail && email === ownerEmail) {
       login({

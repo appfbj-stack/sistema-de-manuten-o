@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppShell } from "../components/layout/AppShell";
+import { useAuthStore } from "../store/authStore";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { DashboardPage } from "../pages/dashboard/DashboardPage";
 import { ClientesPage } from "../pages/clientes/ClientesPage";
@@ -14,109 +16,149 @@ import { RelatorioOSPage } from "../pages/os/RelatorioOSPage";
 import { EquipePage } from "../pages/equipe/EquipePage";
 import { ConfiguracoesPage } from "../pages/configuracoes/ConfiguracoesPage";
 
+function RequireAuth({ children }: { children: ReactNode }) {
+  const user = useAuthStore((state) => state.user);
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
+function LoginOnlyWhenLoggedOut() {
+  const user = useAuthStore((state) => state.user);
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+  return <LoginPage />;
+}
+
 export const router = createBrowserRouter([
   {
     path: "/login",
-    element: <LoginPage />
+    element: <LoginOnlyWhenLoggedOut />
   },
   {
     path: "/",
     element: (
-      <AppShell>
-        <DashboardPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <DashboardPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/clientes",
     element: (
-      <AppShell>
-        <ClientesPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <ClientesPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/equipamentos",
     element: (
-      <AppShell>
-        <EquipamentosPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <EquipamentosPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/os",
     element: (
-      <AppShell>
-        <OrdensPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <OrdensPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/os/nova",
     element: (
-      <AppShell>
-        <CriarOSPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <CriarOSPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/os/:id",
     element: (
-      <AppShell>
-        <DetalheOSPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <DetalheOSPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/os/:id/checklist",
     element: (
-      <AppShell>
-        <ChecklistOSPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <ChecklistOSPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/os/:id/fotos",
     element: (
-      <AppShell>
-        <FotosOSPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <FotosOSPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/os/:id/assinaturas",
     element: (
-      <AppShell>
-        <AssinaturaOSPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <AssinaturaOSPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/os/:id/relatorio",
     element: (
-      <AppShell>
-        <RelatorioOSPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <RelatorioOSPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/equipe",
     element: (
-      <AppShell>
-        <EquipePage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <EquipePage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "/configuracoes",
     element: (
-      <AppShell>
-        <ConfiguracoesPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <ConfiguracoesPage />
+        </AppShell>
+      </RequireAuth>
     )
   },
   {
     path: "*",
-    element: <Navigate to="/" replace />
+    element: <Navigate to="/login" replace />
   }
 ]);
