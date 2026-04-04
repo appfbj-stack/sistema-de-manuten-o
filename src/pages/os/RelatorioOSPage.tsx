@@ -14,6 +14,7 @@ export function RelatorioOSPage() {
   const os = useOSStore((state) => state.getOrderById(id));
   const companyProfile = useCompanyProfileStore((state) => state.profile);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     void loadLocalOrders();
@@ -89,6 +90,32 @@ export function RelatorioOSPage() {
       pdf.save(`relatorio-os-${os.id}.pdf`);
     } finally {
       setIsGeneratingPdf(false);
+    }
+  };
+
+  const compartilharComDono = async () => {
+    if (isSharing) return;
+    setIsSharing(true);
+    try {
+      const linkRelatorio = window.location.href;
+      const empresa = companyProfile.companyName?.trim() || "Equipe técnica";
+      const mensagem = `Olá! Aqui está o relatório da OS #${os.id} (${os.titulo}).\n\nEmpresa executora: ${empresa}\nCliente: ${os.cliente}\nData agendada: ${os.dataAgendada}\n\nAcesse pelo link: ${linkRelatorio}`;
+
+      if (navigator.share) {
+        await navigator.share({
+          title: `Relatório OS #${os.id}`,
+          text: mensagem,
+          url: linkRelatorio
+        });
+        return;
+      }
+
+      await navigator.clipboard.writeText(mensagem);
+      alert("Mensagem copiada. Agora é só colar no WhatsApp e enviar para o dono.");
+    } catch {
+      alert("Não foi possível compartilhar agora. Tente novamente.");
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -364,18 +391,34 @@ export function RelatorioOSPage() {
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="rounded-2xl bg-brand-50 p-4 ring-1 ring-brand-100">
+        <p className="text-sm font-semibold text-brand-900">Compartilhamento com o dono</p>
+        <p className="mt-1 text-sm text-brand-800">
+          Ao finalizar a OS, este relatório já inclui automaticamente os dados da empresa para envio
+          ao cliente.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <button
           onClick={() => navigate(`/os/${os.id}`)}
-          className="flex-1 rounded-xl border border-slate-300 px-4 py-3"
+          className="rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
         >
           Voltar
         </button>
 
         <button
+          onClick={() => void compartilharComDono()}
+          disabled={isSharing}
+          className="rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {isSharing ? "Compartilhando..." : "Compartilhar com dono"}
+        </button>
+
+        <button
           onClick={gerarPDF}
           disabled={isGeneratingPdf}
-          className="flex-1 rounded-xl bg-brand-700 px-4 py-3 text-white"
+          className="rounded-xl bg-brand-700 px-4 py-3 font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isGeneratingPdf ? "Gerando..." : "Gerar PDF"}
         </button>

@@ -92,7 +92,7 @@ type CreateOSInput = Omit<OrdemServico, "status"> & {
 type OSState = {
   orders: OrdemServico[];
   hasLoadedLocal: boolean;
-  loadLocalOrders: () => Promise<void>;
+  loadLocalOrders: (forceRefresh?: boolean) => Promise<void>;
   createOrder: (order: CreateOSInput) => Promise<OrdemServico>;
   updateOrder: (id: string, updates: Partial<OrdemServico>) => Promise<void>;
   getOrderById: (id?: string) => OrdemServico | undefined;
@@ -101,12 +101,16 @@ type OSState = {
 export const useOSStore = create<OSState>((set, get) => ({
   orders: seedOrders,
   hasLoadedLocal: false,
-  loadLocalOrders: async () => {
-    if (get().hasLoadedLocal) return;
+  loadLocalOrders: async (forceRefresh = false) => {
+    if (get().hasLoadedLocal && !forceRefresh) return;
 
     if (isSupabaseConfigured && supabaseCompanyId) {
       try {
         const remoteOrders = await fetchOrdersSupabase();
+        if (forceRefresh) {
+          set({ orders: remoteOrders, hasLoadedLocal: true });
+          return;
+        }
         if (remoteOrders.length) {
           set({ orders: remoteOrders, hasLoadedLocal: true });
           return;

@@ -123,6 +123,10 @@ export function CriarOSPage() {
   });
   const selectedTechnicalType = watch("technicalType");
   const selectedEquipamento = watch("equipamento");
+  const selectedCliente = watch("cliente");
+  const selectedTitulo = watch("titulo");
+  const selectedTecnico = watch("tecnico");
+  const selectedData = watch("dataAgendada");
   const checklistSugestivo = getChecklistTemplateByTechnicalType(selectedTechnicalType);
   const equipamentosFonte = equipamentosRemotos.length ? equipamentosRemotos : equipamentos;
   const equipamentosDoModulo = useMemo(
@@ -220,17 +224,56 @@ export function CriarOSPage() {
         <p className="text-xs uppercase tracking-wide text-brand-100">Ordens de Serviço</p>
         <h1 className="mt-1 text-2xl font-bold">Criar nova OS</h1>
         <p className="mt-2 text-sm text-brand-100">
-          Preencha os dados técnicos. Informações da empresa são aplicadas automaticamente no
-          relatório final.
+          Cadastre apenas os dados da ordem de serviço. Os dados da sua empresa entram automáticos
+          no fechamento para compartilhar com o dono.
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Etapa 1</p>
+            <p className="mt-1 text-sm font-semibold text-slate-800">Dados da OS</p>
+            <p className="mt-1 text-xs text-slate-500">Cliente, equipamento e técnico</p>
+          </div>
+          <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Etapa 2</p>
+            <p className="mt-1 text-sm font-semibold text-slate-800">Planejamento</p>
+            <p className="mt-1 text-xs text-slate-500">Tipo de serviço, prioridade e data</p>
+          </div>
+          <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Etapa 3</p>
+            <p className="mt-1 text-sm font-semibold text-slate-800">Relatório técnico</p>
+            <p className="mt-1 text-xs text-slate-500">Registro para fechamento e compartilhamento</p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-brand-50 p-4 ring-1 ring-brand-100">
+          <h2 className="text-sm font-semibold text-brand-900">Resumo rápido da OS</h2>
+          <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+            <p className="rounded-lg bg-white px-3 py-2 text-slate-700">
+              <strong>Título:</strong> {selectedTitulo?.trim() || "Não informado"}
+            </p>
+            <p className="rounded-lg bg-white px-3 py-2 text-slate-700">
+              <strong>Cliente:</strong> {selectedCliente?.trim() || "Não informado"}
+            </p>
+            <p className="rounded-lg bg-white px-3 py-2 text-slate-700">
+              <strong>Módulo:</strong> {getTechnicalTypeLabel(selectedTechnicalType)}
+            </p>
+            <p className="rounded-lg bg-white px-3 py-2 text-slate-700">
+              <strong>Técnico:</strong> {selectedTecnico?.trim() || "Não informado"}
+            </p>
+            <p className="rounded-lg bg-white px-3 py-2 text-slate-700 sm:col-span-2">
+              <strong>Data agendada:</strong> {selectedData?.trim() || "Não informada"}
+            </p>
+          </div>
+        </div>
+
         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-          <h2 className="mb-4 text-sm font-semibold text-slate-700">Dados principais</h2>
+          <h2 className="mb-4 text-sm font-semibold text-slate-700">Dados da ordem de serviço</h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
+            <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium">Título da OS</label>
               <input
                 {...register("titulo")}
@@ -284,6 +327,9 @@ export function CriarOSPage() {
 
             <div>
               <label className="mb-1 block text-sm font-medium">Equipamento</label>
+              <p className="mb-2 text-xs text-slate-500">
+                Selecione primeiro o módulo técnico para filtrar a lista de equipamentos.
+              </p>
               <input
                 value={equipmentSearch}
                 onChange={(event) => setEquipmentSearch(event.target.value)}
@@ -337,9 +383,9 @@ export function CriarOSPage() {
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-          <h2 className="mb-4 text-sm font-semibold text-slate-700">Execução</h2>
+          <h2 className="mb-4 text-sm font-semibold text-slate-700">Planejamento e execução</h2>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">Módulo técnico</label>
               <select
@@ -374,17 +420,6 @@ export function CriarOSPage() {
               ) : null}
             </div>
 
-            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-brand-800">
-                Checklist sugerido para {getTechnicalTypeLabel(selectedTechnicalType)}
-              </p>
-              <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                {checklistSugestivo.map((item) => (
-                  <li key={item}>• {item}</li>
-                ))}
-              </ul>
-            </div>
-
             <div>
               <label className="mb-1 block text-sm font-medium">Prioridade</label>
               <select
@@ -413,7 +448,18 @@ export function CriarOSPage() {
               ) : null}
             </div>
 
-            <div>
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3 md:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand-800">
+                Checklist sugerido para {getTechnicalTypeLabel(selectedTechnicalType)}
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                {checklistSugestivo.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium">Observações</label>
               <textarea
                 {...register("observacoes")}
@@ -423,7 +469,7 @@ export function CriarOSPage() {
               />
             </div>
 
-            <div className="rounded-xl border border-slate-200 p-3">
+            <div className="rounded-xl border border-slate-200 p-3 md:col-span-2">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
                 Relatório técnico detalhado
               </p>
@@ -482,22 +528,27 @@ export function CriarOSPage() {
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => navigate("/os")}
-            className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700"
-          >
-            Cancelar
-          </button>
+        <div className="sticky bottom-4 z-10 rounded-2xl bg-white/95 p-3 shadow-lg ring-1 ring-slate-200 backdrop-blur">
+          <div className="mb-2 text-center text-xs font-medium text-slate-500">
+            Ao finalizar a OS, o sistema abre o relatório pronto para compartilhar com o dono.
+          </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/os")}
+              className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex-1 rounded-xl bg-brand-700 px-4 py-3 font-medium text-white"
-          >
-            Salvar OS
-          </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 rounded-xl bg-brand-700 px-4 py-3 font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isSubmitting ? "Salvando..." : "Salvar OS"}
+            </button>
+          </div>
         </div>
       </form>
     </div>

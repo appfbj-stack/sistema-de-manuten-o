@@ -179,7 +179,7 @@ export function DetalheOSPage() {
           onClick={() => void handleFinish()}
           className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700"
         >
-          Finalizar OS
+          Finalizar e compartilhar
         </button>
       </div>
     </div>
