@@ -2,7 +2,7 @@ import { ClipboardList, Home, Settings, Users, Wrench } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const items = [
-  { to: "/", label: "Painel", icon: Home },
+  { to: "/app", label: "Painel", icon: Home },
   { to: "/os", label: "OS", icon: ClipboardList },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/equipamentos", label: "Equip.", icon: Wrench },

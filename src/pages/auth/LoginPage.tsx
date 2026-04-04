@@ -75,7 +75,7 @@ export function LoginPage() {
         email,
         role: "owner"
       });
-      navigate("/");
+      navigate("/app");
       return;
     }
 
@@ -89,7 +89,7 @@ export function LoginPage() {
         email,
         role: "technician"
       });
-      navigate("/");
+      navigate("/app");
       return;
     }
 
@@ -99,7 +99,7 @@ export function LoginPage() {
         email,
         role: "owner"
       });
-      navigate("/");
+      navigate("/app");
       return;
     }
 

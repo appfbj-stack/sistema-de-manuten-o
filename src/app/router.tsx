@@ -15,6 +15,7 @@ import { FotosOSPage } from "../pages/os/FotosOSPage";
 import { RelatorioOSPage } from "../pages/os/RelatorioOSPage";
 import { EquipePage } from "../pages/equipe/EquipePage";
 import { ConfiguracoesPage } from "../pages/configuracoes/ConfiguracoesPage";
+import { LandingPage } from "../pages/marketing/LandingPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const user = useAuthStore((state) => state.user);
@@ -27,7 +28,7 @@ function RequireAuth({ children }: { children: ReactNode }) {
 function LoginOnlyWhenLoggedOut() {
   const user = useAuthStore((state) => state.user);
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
   return <LoginPage />;
 }
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
   },
   {
     path: "/",
+    element: <LandingPage />
+  },
+  {
+    path: "/app",
     element: (
       <RequireAuth>
         <AppShell>
@@ -159,6 +164,6 @@ export const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <Navigate to="/login" replace />
+    element: <Navigate to="/" replace />
   }
 ]);
